@@ -1,0 +1,40 @@
+social-media-platform/
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py          # Flask app 初始化，配置数据库和JWT
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   └── user.py          # 用户模型
+│   │   ├── routes/
+│   │   │   ├── __init__.py      # 路由注册
+│   │   │   └── auth.py          # 认证相关路由
+│   │   └── utils/
+│   │       └── __init__.py      
+│   ├── .venv/                   # Python 虚拟环境
+│   ├── config.py                # 配置文件
+│   ├── requirements.txt         # 后端依赖
+│   └── run.py                   # 启动文件
+│
+├── src/                         # Vue前端
+│   ├── assets/                  # 静态资源
+│   ├── components/
+│   │   └── common/
+│   │       ├── LoginModal.vue   # 登录/注册模态框
+│   │       └── Sidebar.vue      # 侧边导航栏
+│   ├── views/
+│   │   └── HomeView.vue         # 主页视图
+│   ├── stores/
+│   │   └── user.js             # 用户状态管理
+│   ├── styles/
+│   │   ├── variables.scss       # 全局变量和主题
+│   │   └── element-variables.scss # Element Plus 主题配置
+│   ├── router/
+│   │   └── index.js            # 路由配置
+│   ├── App.vue                  # 根组件
+│   └── main.js                  # 入口文件
+│
+├── public/                      # 公共资源
+├── index.html                   # HTML模板
+├── package.json                 # 前端依赖
+├── vite.config.js              # Vite配置
+└── README.md                    # 项目说明
