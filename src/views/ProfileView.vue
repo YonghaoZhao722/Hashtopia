@@ -19,29 +19,29 @@
           <div class="profile-details">
             <div class="profile-username">
               <h1>{{ userProfile?.username }}</h1>
-              <el-button 
+              <el-button
                 v-if="isCurrentUser"
-                type="primary" 
+                type="primary"
                 @click="showEditProfile"
                 class="edit-btn"
               >
-                编辑资料
+                Edit Profile
               </el-button>
             </div>
             <div class="profile-stats">
               <div class="stat-item">
                 <span class="stat-value">{{ postsCount }}</span>
-                <span class="stat-label">笔记</span>
+                <span class="stat-label">Posts</span>
               </div>
               <div class="stat-divider"></div>
               <div class="stat-item">
                 <span class="stat-value">{{ likesCount }}</span>
-                <span class="stat-label">获赞</span>
+                <span class="stat-label">Likes</span>
               </div>
             </div>
             <div class="profile-bio">
               <p v-if="userProfile?.bio">{{ userProfile.bio }}</p>
-              <p v-else-if="isCurrentUser" class="empty-bio">添加简介，让大家认识你...</p>
+              <p v-else-if="isCurrentUser" class="empty-bio">Add a bio to let others know you...</p>
             </div>
             <div class="profile-meta">
               <template v-if="userProfile?.gender || userProfile?.age || userProfile?.location">
@@ -49,14 +49,14 @@
                   {{ userProfile.gender }}
                 </el-tag>
                 <el-tag v-if="userProfile.age" size="small" class="meta-tag">
-                  {{ userProfile.age }}岁
+                  {{ userProfile.age }} years
                 </el-tag>
                 <el-tag v-if="userProfile.location" size="small" class="meta-tag">
                   {{ userProfile.location }}
                 </el-tag>
               </template>
               <p v-else-if="isCurrentUser" class="empty-meta">
-                添加个人信息...
+                Add personal information...
               </p>
             </div>
           </div>
@@ -68,18 +68,18 @@
     <div class="profile-content">
       <el-card>
         <el-tabs v-model="activeTab" class="demo-tabs">
-          <el-tab-pane label="笔记" name="posts">
+          <el-tab-pane label="Posts" name="posts">
             <div class="posts-grid" v-if="userPosts.length">
-              <el-card 
-                v-for="post in userPosts" 
-                :key="post.id" 
+              <el-card
+                v-for="post in userPosts"
+                :key="post.id"
                 class="post-card"
                 @click="viewPost(post.id)"
                 shadow="hover"
               >
                 <div class="post-image">
-                  <el-image 
-                    :src="post.cover_image || defaultPostCover" 
+                  <el-image
+                    :src="post.cover_image || defaultPostCover"
                     fit="cover"
                   />
                 </div>
@@ -99,16 +99,16 @@
               </el-card>
             </div>
             <div v-else class="empty-state">
-              <el-empty description="暂无笔记" />
+              <el-empty description="No posts yet" />
             </div>
           </el-tab-pane>
-          
-          <el-tab-pane label="点赞" name="likes">
+
+          <el-tab-pane label="Likes" name="likes">
             <div class="posts-grid" v-if="likedPosts.length">
               <!-- Similar post cards structure -->
             </div>
             <div v-else class="empty-state">
-              <el-empty description="暂无点赞内容" />
+              <el-empty description="No liked posts yet" />
             </div>
           </el-tab-pane>
         </el-tabs>
@@ -118,17 +118,17 @@
     <!-- Edit Profile Dialog -->
     <el-dialog
       v-model="editProfileVisible"
-      title="编辑个人资料"
+      title="Edit Profile"
       width="500px"
       class="edit-profile-dialog"
     >
-      <el-form 
+      <el-form
         ref="editFormRef"
         :model="editForm"
         :rules="editRules"
         label-width="80px"
       >
-        <el-form-item label="头像">
+        <el-form-item label="Avatar">
           <el-upload
             class="avatar-uploader"
             action="/api/upload/avatar"
@@ -141,42 +141,42 @@
           </el-upload>
         </el-form-item>
 
-        <el-form-item label="简介">
+        <el-form-item label="Bio">
           <el-input
             v-model="editForm.bio"
             type="textarea"
             :rows="3"
-            placeholder="介绍一下自己吧..."
+            placeholder="Introduce yourself..."
           />
         </el-form-item>
 
-        <el-form-item label="性别">
-          <el-select v-model="editForm.gender" placeholder="选择性别">
-            <el-option label="男" value="男" />
-            <el-option label="女" value="女" />
-            <el-option label="其他" value="其他" />
+        <el-form-item label="Gender">
+          <el-select v-model="editForm.gender" placeholder="Select gender">
+            <el-option label="Male" value="Male" />
+            <el-option label="Female" value="Female" />
+            <el-option label="Other" value="Other" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="年龄">
-          <el-input-number 
-            v-model="editForm.age" 
-            :min="1" 
+        <el-form-item label="Age">
+          <el-input-number
+            v-model="editForm.age"
+            :min="1"
             :max="120"
             controls-position="right"
           />
         </el-form-item>
 
-        <el-form-item label="地区">
-          <el-input v-model="editForm.location" placeholder="填写所在地区" />
+        <el-form-item label="Location">
+          <el-input v-model="editForm.location" placeholder="Enter location" />
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="editProfileVisible = false">取消</el-button>
+          <el-button @click="editProfileVisible = false">Cancel</el-button>
           <el-button type="primary" @click="updateProfile" :loading="updating">
-            保存
+            Save
           </el-button>
         </span>
       </template>
@@ -184,28 +184,29 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import { ElMessage } from 'element-plus'
-import { View, Star, Plus } from '@element-plus/icons-vue'
-import defaultAvatar from '@/assets/default-avatar.png'
-import defaultPostCover from '@/assets/default-post-cover.png'
-import axios from 'axios'
 
-const route = useRoute()
-const router = useRouter()
-const userStore = useUserStore()
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/user';
+import { ElMessage } from 'element-plus';
+import { View, Star, Plus } from '@element-plus/icons-vue';
+import defaultAvatar from '@/assets/default-avatar.png';
+import defaultPostCover from '@/assets/default-post-cover.png';
+import axios from 'axios';
+
+const route = useRoute();
+const router = useRouter();
+const userStore = useUserStore();
 
 // State
-const userProfile = ref(null)
-const userPosts = ref([])
-const likedPosts = ref([])
-const activeTab = ref('posts')
-const editProfileVisible = ref(false)
-const updating = ref(false)
-const editFormRef = ref(null)
+const userProfile = ref(null);
+const userPosts = ref([]);
+const likedPosts = ref([]);
+const activeTab = ref('posts');
+const editProfileVisible = ref(false);
+const updating = ref(false);
+const editFormRef = ref(null);
 
 const editForm = ref({
   avatar: '',
@@ -213,25 +214,35 @@ const editForm = ref({
   gender: '',
   age: null,
   location: ''
-})
+});
+
+const props = defineProps({
+  id: {
+    type: [String, Number],
+    default: null
+  }
+});
+
+const targetUserId = computed(() =>
+  props.id || userStore.user?.id
+);
 
 // Computed
-const isCurrentUser = computed(() => 
-  userStore.username === route.params.username
-)
+const isCurrentUser = computed(() =>
+  userStore.user?.id === Number(targetUserId.value)
+);
 
-const postsCount = computed(() => userPosts.value.length)
-const likesCount = computed(() => 
+const postsCount = computed(() => userPosts.value.length);
+const likesCount = computed(() =>
   userPosts.value.reduce((total, post) => total + post.likes, 0)
-)
+);
 
 // Methods
 const fetchUserProfile = async () => {
   try {
-    const response = await axios.get(`/api/users/${route.params.username}`)
-    userProfile.value = response.data
-    
-    // Pre-fill edit form if it's current user
+    const response = await axios.get(`/api/users/profile/${targetUserId.value}`);
+    userProfile.value = response.data;
+
     if (isCurrentUser.value) {
       editForm.value = {
         avatar: userProfile.value.avatar || '',
@@ -239,62 +250,63 @@ const fetchUserProfile = async () => {
         gender: userProfile.value.gender || '',
         age: userProfile.value.age || null,
         location: userProfile.value.location || ''
-      }
+      };
     }
   } catch (error) {
-    ElMessage.error('获取用户信息失败')
+    ElMessage.error('Failed to fetch user profile.');
   }
-}
+};
 
 const fetchUserPosts = async () => {
   try {
-    const response = await axios.get(`/api/users/${route.params.username}/posts`)
-    userPosts.value = response.data.posts
+    const response = await axios.get(`/api/users/${targetUserId.value}/posts`);
+    userPosts.value = response.data.posts;
   } catch (error) {
-    ElMessage.error('获取笔记失败')
+    ElMessage.error('Failed to fetch posts.');
   }
-}
+};
 
 const fetchLikedPosts = async () => {
   try {
-    const response = await axios.get(`/api/users/${route.params.username}/liked-posts`)
-    likedPosts.value = response.data.posts
+    const response = await axios.get(`/api/users/${targetUserId.value}/liked-posts`);
+    likedPosts.value = response.data.posts;
   } catch (error) {
-    ElMessage.error('获取点赞内容失败')
+    ElMessage.error('Failed to fetch liked posts.');
   }
-}
+};
 
 const showEditProfile = () => {
-  editProfileVisible.value = true
-}
+  editProfileVisible.value = true;
+};
 
 const updateProfile = async () => {
-  if (!editFormRef.value) return
-  
+  if (!editFormRef.value) return;
+
   try {
-    updating.value = true
-    const response = await axios.put('/api/users/profile', editForm.value)
-    userProfile.value = response.data.user
-    editProfileVisible.value = false
-    ElMessage.success('个人资料已更新')
+    updating.value = true;
+    const response = await axios.put('/api/users/profile', editForm.value);
+    userProfile.value = response.data.user;
+    editProfileVisible.value = false;
+    ElMessage.success('Profile updated successfully.');
   } catch (error) {
-    ElMessage.error('更新失败，请重试')
+    ElMessage.error('Failed to update profile. Please try again.');
   } finally {
-    updating.value = false
+    updating.value = false;
   }
-}
+};
 
 const viewPost = (postId) => {
-  router.push(`/posts/${postId}`)
-}
+  router.push(`/posts/${postId}`);
+};
 
 // Lifecycle
 onMounted(() => {
-  fetchUserProfile()
-  fetchUserPosts()
-  fetchLikedPosts()
-})
+  fetchUserProfile();
+  fetchUserPosts();
+  fetchLikedPosts();
+});
 </script>
+
 
 <style scoped lang="scss">
 .profile-container {
@@ -315,7 +327,7 @@ onMounted(() => {
 
 .profile-avatar {
   flex-shrink: 0;
-  
+
   .avatar-image {
     width: 150px;
     height: 150px;
@@ -464,7 +476,7 @@ onMounted(() => {
 
   .avatar-uploader {
     text-align: center;
-    
+
     .upload-avatar {
       width: 100px;
       height: 100px;

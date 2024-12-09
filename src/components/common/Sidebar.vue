@@ -21,19 +21,19 @@
         <el-icon><Bell /></el-icon>
         <span>Notifications</span>
       </el-menu-item>
-      
+
       <!-- 未登录显示登录按钮 -->
       <el-menu-item v-if="!userStore.isLoggedIn" index="login" @click="handleLogin">
         <el-icon><User /></el-icon>
         <span>Login</span>
       </el-menu-item>
-      
+
       <!-- 已登录显示用户菜单 -->
       <el-sub-menu v-else index="user" popper-class="user-dropdown">
         <template #title>
           <div class="user-menu-title">
-            <img 
-              :src="defaultAvatar" 
+            <img
+              :src="defaultAvatar"
               class="user-avatar"
               alt="avatar"
             />
@@ -42,11 +42,11 @@
         </template>
         <el-menu-item index="profile" @click="goToProfile">
           <el-icon><User /></el-icon>
-          <span>个人主页</span>
+          <span>Profile</span>
         </el-menu-item>
         <el-menu-item index="logout" @click="handleLogout">
           <el-icon><SwitchButton /></el-icon>
-          <span>退出登录</span>
+          <span>Log out</span>
         </el-menu-item>
       </el-sub-menu>
     </el-menu>
@@ -55,7 +55,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { 
+import {
   Compass,
   Plus,
   Bell,
@@ -83,12 +83,12 @@ const handleLogin = () => {
 }
 
 const goToProfile = () => {
-  router.push(`/profile/${userStore.username}`)
+  router.push(`/profile/${userStore.user?.id}`)
 }
 
 const handleLogout = () => {
   userStore.logout()
-  ElMessage.success('已退出登录')
+  ElMessage.success('Log Out Successfully')
   router.push('/')
 }
 </script>
