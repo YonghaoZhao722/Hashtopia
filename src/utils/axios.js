@@ -2,19 +2,19 @@
 import axios from 'axios'
 
 // Set base URL for API requests
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001'
 
 // Add request interceptor
 axios.interceptors.request.use(
   (config) => {
     // Get token from localStorage
     const token = localStorage.getItem('token')
-    
+
     // If token exists, add to headers
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    
+
     return config
   },
   (error) => {
