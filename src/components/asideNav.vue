@@ -24,104 +24,6 @@ const show = ref(false)
 const changeShow = () => {
   show.value = !show.value;
 }
-// 用户信息更新栏
-////////////////////////////////////////////////////////////////
-// 控制文件表单
-const dialogFormVisible = ref(false)
-// 文件上传对象
-const upload = ref(null)
-// 上传头像成功后修改pinia数据
-const avatar = ref('')
-const fileList = ref([])
-const handleExceed = (files) => {
-  upload.value.clearFiles()
-  const file = files[0]
-  file.uid = genFileId()
-  upload.value.handleStart(file)
-}
-const handleChange = (uploadFile, uploadFiles) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']; // 可接受的图片类型
-  const maxSize = 2; // 最大文件大小，单位：MB
-
-  if (!allowedTypes.includes(uploadFile.raw.type)) {
-    ElMessage.error('请上传正确的图片文件!');
-    upload.value.handleRemove(uploadFile);
-    return false;
-  } else if (uploadFile.raw.size / 1024 / 1024 > maxSize) {
-    ElMessage.error(`文件大小最多${maxSize}MB!`);
-    upload.value.handleRemove(uploadFile);
-    return false;
-  }
-  return true;
-};
-const onSuccess = async (response) => {
-  avatar.value = response.filepath
-}
-const onError = async (error) => {
-  ElMessage({
-    type: 'warning',
-    message: '头像上传失败'
-  })
-  const userStore = useUserStore();
-  await userStore.userLogout()
-  await router.replace('/')
-}
-// 控制表单信息
-const form = ref({
-  username: '',
-  signature: ''
-})
-const openDialog = () => {
-  dialogFormVisible.value = true
-  form.value.username = userStore.userInfo.username
-  form.value.signature = userStore.userInfo.signature
-}
-// 表单验证规则
-const rules = {
-  username: [
-    {required: true, message: '用户名不能为空！', trigger: 'blur'}
-  ],
-  signature: [
-    {required: true, message: '个性签名不能为空!', trigger: 'blur'}
-  ]
-}
-// 表单对象
-const formRef = ref(null)
-const doUpdate = async () => {
-  const {username, signature} = form.value;
-  const isModified = username !== userStore.userInfo.username || signature !== userStore.userInfo.signature;
-  const isAvatarUploaded = fileList.value.length === 1;
-
-  if (!isModified && !isAvatarUploaded) {
-    ElMessage({type: 'warning', message: '未作任何修改！'});
-    return;
-  }
-
-  if (isModified && !isAvatarUploaded) {
-    await updateUserInfo({username, signature});
-    avatar.value = userStore.userInfo.avatar;
-    userStore.changeInfo({username, signature, avatar});
-    ElMessage({type: 'success', message: '用户信息更新成功'});
-    dialogFormVisible.value = false;
-    return;
-  }
-
-  if (!isModified && isAvatarUploaded) {
-    await upload.value.submit();
-    userStore.changeInfo({username, signature, avatar});
-    ElMessage({type: 'success', message: '头像上传成功'});
-    dialogFormVisible.value = false;
-    return;
-  }
-
-  if (isModified && isAvatarUploaded) {
-    const res = await updateUserInfo({username, signature});
-    await upload.value.submit();
-    userStore.changeInfo({username, signature, avatar});
-    ElMessage({type: 'success', message: res.info});
-    dialogFormVisible.value = false;
-  }
-};
 </script>
 
 <template>
@@ -154,16 +56,6 @@ const doUpdate = async () => {
             </el-icon>
             <h5 class="menuText" :class="{ open2: isMenuOpen }">发布</h5>
           </RouterLink>
-        </el-tooltip>
-      </li>
-      <li class="menuItem" v-if="userStore.userInfo.id">
-        <el-tooltip effect="dark" content="更新个人信息" placement="right">
-          <div class="menuOption" @click="openDialog">
-            <el-icon size="x-large">
-              <Tools/>
-            </el-icon>
-            <h5 class="menuText" :class="{ open2: isMenuOpen }">更新个人信息</h5>
-          </div>
         </el-tooltip>
       </li>
       <li class="menuItem" v-if="userStore.userInfo.id">
@@ -227,51 +119,6 @@ const doUpdate = async () => {
     </el-button>
     <login @changeShow="changeShow"/>
   </div>
-
-  <el-dialog v-model="dialogFormVisible" title="更新个人信息" center draggable>
-    <div class="fileUpload">
-      <el-upload v-model:file-list="fileList"
-                 ref="upload"
-                 action="http://localhost:8000/user/avatar/"
-                 :limit="1"
-                 :on-exceed="handleExceed"
-                 :auto-upload="false"
-                 :on-change="handleChange"
-                 :headers="userStore.headersObj"
-                 :on-success="onSuccess"
-                 :on-error="onError"
-      >
-        <template #trigger>
-          <el-button class="btn" type="primary" round>选择一个文件</el-button>
-        </template>
-        <template #tip>
-          <div class="el-upload__tip" style="color:red;text-align: left">
-            仅限一个文件，新文件将会被覆盖
-          </div>
-        </template>
-      </el-upload>
-
-    </div>
-    <div class="fileUpload">
-      <el-form :model="form" ref="formRef" :rules="rules" label-position="top">
-        <el-form-item prop="username" label="昵称" label-width="100px" style="margin: 30px;">
-          <el-input v-model="form.username" maxlength="6"
-                    show-word-limit class="my"/>
-        </el-form-item>
-        <el-form-item prop="signature" label="个性签名" label-width="100px" style="margin: 30px;">
-          <el-input v-model="form.signature" class="my"/>
-        </el-form-item>
-      </el-form>
-    </div>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="dialogFormVisible = false" round>取消</el-button>
-        <el-button type="primary" @click="doUpdate" round>
-          确认
-        </el-button>
-      </span>
-    </template>
-  </el-dialog>
 </template>
 
 <style scoped>
