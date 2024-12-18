@@ -34,8 +34,8 @@ const handleLoad = (card) => {
             />
           </a>
           <div style="padding: 10px">
-            <div style="margin-bottom: 10px;height: 20px;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
-              <span style="font-size: 1.0rem;" @click="details(card.id)">{{ card.title }}</span>
+            <div class="card-title-container">
+              <span class="card-title" @click="details(card.id)">{{ card.title }}</span>
             </div>
             <div class="bottom">
               <el-row style="align-items: center;">
@@ -54,9 +54,8 @@ const handleLoad = (card) => {
             <div class="image" :style="{height: card.img_info.height / (card.img_info.width / 250) + 'px'}">
             </div>
             <div style="padding: 10px">
-              <div
-                  style="margin-bottom: 10px;height: 20px;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
-                <span style="font-size: 1.0rem;" @click="details(card.id)">{{ card.title }}</span>
+              <div class="card-title-container">
+                <span class="card-title" @click="details(card.id)">{{ card.title }}</span>
               </div>
               <div class="bottom">
                 <el-row style="align-items: center;">
@@ -128,9 +127,22 @@ section {
 }
 
 .username {
+  margin-top:-3%;
   margin-left: 10px;
-  font-weight: 200;
-  font-size: 0.5rem;
+  font-weight: 400; /* increased from 200 for better readability */
+  font-size: 0.875rem; /* increased from 0.5rem */
 }
 
+.card-title-container {
+  margin-bottom: 10px;
+  height: 24px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-title {
+  font-size: 1rem;
+  cursor: pointer;
+}
 </style>
