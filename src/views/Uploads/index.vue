@@ -88,8 +88,8 @@ const validateFile = (file) => {
     }
 
     // 检查文件数量
-    if (fileList.value.length >= 18) {
-      ElMessage.warning('最多只能上传18张图片!')
+    if (fileList.value.length >= 9) {
+      ElMessage.warning('最多只能上传9张图片!')
       resolve(false)
       return
     }
@@ -144,7 +144,7 @@ const doUploads = async () => {
     ElMessage({type: 'success', message: '发布成功，3秒后跳转到主页'})
     setTimeout(() => {
       router.replace('/')
-    }, 3000)
+    }, 1000)
   } catch (error) {
     ElMessage.error('发布失败,请重试')
   }
@@ -185,7 +185,7 @@ const handleChange = (file, fileList) => {
   <div class="upload-container">
     <!-- 图片上传区 -->
     <div class="upload-area">
-      <h2 class="upload-title">图片编辑 ({{ fileList.length }}/18)</h2>
+      <h2 class="upload-title">图片编辑 ({{ fileList.length }}/9)</h2>
       <div class="drop-zone" 
            :class="{ 'is-dragover': isDragging }"
            @dragover.prevent="isDragging = true"
@@ -200,16 +200,13 @@ const handleChange = (file, fileList) => {
               list-type="picture-card"
               multiple
               :headers="userStore.headersObj"
-              :limit="18"
+              :limit="9"
               :on-preview="handlePictureCardPreview"
               :auto-upload="false"
               :data="{id: postId}"
           >
           <template #default>
             <el-icon><Plus /></el-icon>
-            <div class="upload-text">
-              <span>添加</span>
-            </div>
           </template>
         </el-upload>
       </div>
@@ -231,7 +228,7 @@ const handleChange = (file, fileList) => {
         <div class="content-input">
           <el-input
               v-model="content"
-              maxlength="3000"
+              maxlength="1000"
               placeholder="输入正文描述，真诚有价值的分享才人温暖"
               show-word-limit
               type="textarea"
