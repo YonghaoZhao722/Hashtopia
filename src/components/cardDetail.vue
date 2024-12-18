@@ -160,8 +160,8 @@ onMounted(() => load())
         <!-- 图片区 -->
         <el-col :span="50">
           <div class="banner">
-            <el-carousel height="620px">
-              <el-carousel-item v-for="item in detail.imgs" :key="item">
+            <el-carousel height="600px">
+              <el-carousel-item v-for="item in detail.imgs" :key="item" class="carousel-item">
                 <img class="image"
                      :src="item"
                      alt=""/>
@@ -331,7 +331,9 @@ onMounted(() => load())
 
 .banner {
   width: 600px;
+  height: 600px;      /* 明确设置高度 */
   border-radius: 0.8rem;
+  overflow: hidden;    /* 防止内容溢出 */
 }
 
 .username {
@@ -353,10 +355,11 @@ onMounted(() => load())
 }
 
 .image {
-  width: 600px;
-  height: 620px;
+  width: 100%;         /* 改为100%以适应容器宽度 */
+  height: 600px;       /* 与carousel高度保持一致 */
   border-radius: 0.8rem 0 0 0.8rem;
-  object-fit: cover;
+  object-fit: contain; /* 保持图片比例完整显示 */
+  background-color: white; /* 添加背景色填充可能的空白区域 */
 }
 
 .main-content::-webkit-scrollbar {

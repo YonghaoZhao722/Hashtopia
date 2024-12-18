@@ -28,6 +28,12 @@ const changeShow = () => {
 
 <template>
   <nav class="menu" :class="{ open: isMenuOpen }">
+    <div class="logoSection">
+      <RouterLink to="/">
+        <img src="../assets/logo.png" alt="Logo" style="pointer-events:none;">
+      </RouterLink>
+    </div>
+
     <el-tooltip effect="dark" content="切换菜单样式" placement="right">
       <div class="actionsBar">
         <div>
@@ -169,7 +175,7 @@ const changeShow = () => {
   height: auto;
   background-color: #f6f3f3;
   z-index: 2;
-  top: 65px;
+  top: 10px;
   bottom: 0;
   left: 10px;
   margin: auto;
@@ -222,11 +228,32 @@ const changeShow = () => {
   text-align: center;
 }
 
+/* Add new styles for logo section */
+.logoSection {
+  width: 100%;
+  padding: 1rem 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.logoSection img {
+  width: 40px;
+  height: 40px;
+  transition: 0.3s ease;
+}
+
+.menu.open .logoSection img {
+  width: 60px;
+  height: 60px;
+}
+
 .menu .optionsBar {
   overflow: hidden;
   display: flex;
   width: 100%;
-  height: 60%;
+  height: 55%;
   padding: 0 0.5rem;
   align-items: center;
   flex-direction: column;
@@ -297,7 +324,7 @@ const changeShow = () => {
 
 .menu.open {
   width: 240px;
-  opacity: 0.9;
+  opacity: 1;
 }
 
 .menuText.open2 {

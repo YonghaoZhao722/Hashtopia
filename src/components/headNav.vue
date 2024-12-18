@@ -16,12 +16,6 @@ const searchThings = () => {
 <template>
   <el-row :gutter="24">
     <el-col :span="4" style="margin-top: 15px;">
-      <!-- icon  -->
-      <RouterLink to="/">
-        <img width="50" height=auto style="pointer-events:none;"
-     src="../assets/logo.png"
-     alt="">
-      </RouterLink>
     </el-col>
     <el-col :span="16" style="margin-top: 15px;">
       <el-input class="my" v-model="searchInput" placeholder="搜索点什么...." @keyup.enter="searchThings"

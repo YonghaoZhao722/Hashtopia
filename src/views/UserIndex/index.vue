@@ -3,7 +3,7 @@ import {useRoute} from "vue-router";
 import {onMounted, ref, computed} from "vue";
 import HomeCard from "@/components/homeCard.vue";
 import CardDetail from "@/components/cardDetail.vue";
-import {Back} from "@element-plus/icons-vue";
+import {Back,Plus } from "@element-plus/icons-vue";
 import { genFileId } from 'element-plus'
 import {doFocus, queryUserIndex, queryUserPost, unFollow, queryUserFocus, updateUserInfo} from "@/apis/main";
 import {controlDetail} from "@/stores/controlDetail";
@@ -279,23 +279,37 @@ const handleExceed = (files) => {
   file.uid = genFileId()
   upload.value.handleStart(file)
 }
-const handleChange = (uploadFile, uploadFiles) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']; // 可接受的图片类型
-  const maxSize = 2; // 最大文件大小，单位：MB
+const handleChange = (uploadFile) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
+  const maxSize = 2
 
   if (!allowedTypes.includes(uploadFile.raw.type)) {
-    ElMessage.error('请上传正确的图片文件!');
-    upload.value.handleRemove(uploadFile);
-    return false;
-  } else if (uploadFile.raw.size / 1024 / 1024 > maxSize) {
-    ElMessage.error(`文件大小最多${maxSize}MB!`);
-    upload.value.handleRemove(uploadFile);
-    return false;
+    ElMessage.error('请上传正确的图片文件!')
+    fileList.value = []
+    return false
+  } 
+  
+  if (uploadFile.raw.size / 1024 / 1024 > maxSize) {
+    ElMessage.error(`文件大小最多${maxSize}MB!`)
+    fileList.value = []
+    return false
   }
-  return true;
-};
+
+  // 直接更新 fileList
+  fileList.value = [uploadFile]
+  return true
+}
+
+const closeDialog = async () => {
+  dialogFormVisible.value = false;
+  await getUserInfo()
+  fileList.value = [];
+}
+
 const onSuccess = async (response) => {
   avatar.value = response.filepath
+  // 刷新用户信息
+  await getUserInfo()
 }
 const onError = async (error) => {
   ElMessage({
@@ -364,7 +378,9 @@ const doUpdate = async () => {
   } catch (error) {
     ElMessage({type: 'error', message: '更新失败，请重试'});
   }
+  
 };
+
 </script>
 
 <template>
@@ -495,27 +511,39 @@ const doUpdate = async () => {
     </div>
 
     <!-- 添加更新个人信息的弹窗 -->
-    <el-dialog v-model="dialogFormVisible" title="更新个人信息" center draggable>
-    <div class="fileUpload">
-      <el-upload v-model:file-list="fileList"
-                 ref="upload"
-                 action="http://localhost:8000/user/avatar/"
-                 :limit="1"
-                 :on-exceed="handleExceed"
-                 :auto-upload="false"
-                 :on-change="handleChange"
-                 :headers="userStore.headersObj"
-                 :on-success="onSuccess"
-                 :on-error="onError"
+        <el-dialog 
+        v-model="dialogFormVisible" 
+        title="" 
+        @closed="closeDialog"
+        center 
+        draggable
+        class="update-info-dialog"
+        style="width: 30%;"
       >
-        <template #trigger>
-          <el-button class="btn" type="primary" round>选择一个文件</el-button>
-        </template>
-        <template #tip>
-          <div class="el-upload__tip" style="color:red;text-align: left">
-            仅限一个文件，新文件将会被覆盖
-          </div>
-        </template>
+        <div class="fileUpload">
+          <el-upload v-model:file-list="fileList"
+          :show-file-list="true"
+          list-type="picture-card"
+          ref="upload"
+          action="http://localhost:8000/user/avatar/"
+          :limit="1"
+          :on-exceed="handleExceed"
+          :auto-upload="false"
+          :on-change="handleChange"
+          :headers="userStore.headersObj"
+          :on-success="onSuccess"
+          :on-error="onError"
+          class="upload-container"
+          :on-preview="handlePictureCardPreview"
+          >
+          <template #trigger>
+            <div v-if="!fileList.length" class="upload-area">
+              <div class="upload-box">
+                <el-icon class="upload-icon"><Plus /></el-icon>
+              </div>
+              <div class="upload-text">Drag or Click</div>
+            </div>
+          </template>
       </el-upload>
 
     </div>
@@ -532,7 +560,7 @@ const doUpdate = async () => {
     </div>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="dialogFormVisible = false" round>取消</el-button>
+        <el-button @click="closeDialog" round>取消</el-button>
         <el-button type="primary" @click="doUpdate" round>
           确认
         </el-button>
@@ -647,5 +675,65 @@ const doUpdate = async () => {
 
 .update-btn:hover {
   background-color: #fd5656;
+}
+
+:deep(.el-dialog__title) {
+  width: 100%;
+  text-align: center;
+  display: block;
+}
+
+/* 上传区域容器样式 */
+.upload-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.upload-area {
+  width: 200px;
+  height: 200px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.3s;
+  margin: 0 auto; /* 确保水平居中 */
+}
+
+.upload-area:hover {
+  border-color: #409eff;
+}
+
+.upload-box {
+  width: 80px;
+  height: 80px;
+  border: 2px dashed #dcdfe6;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.upload-icon {
+  font-size: 24px;
+  color: #909399;
+}
+
+.upload-text {
+  color: #909399;
+  font-size: 14px;
+}
+
+/* 确保文件上传区域居中 */
+.fileUpload {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
