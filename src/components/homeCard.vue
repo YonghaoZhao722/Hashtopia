@@ -107,7 +107,7 @@ const handleLoad = (card) => {
 
 section {
   width: 250px;
-  break-inside: avoid; /* 防止卡片被分割在两列中 */
+  break-inside: avoid;
   margin: 20px 20px 20px 20px;
 }
 
