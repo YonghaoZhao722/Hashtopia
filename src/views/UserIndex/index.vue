@@ -22,7 +22,7 @@ const getUserInfo = async () => {
   const id = route.params.id
   const res = await queryUserIndex({id})
   userInfo.value = res.data
-  document.title = res.data.user.username + ' .Dlock'
+  document.title = res.data.user.username
 }
 const checkFollow = (id) => {
   // 确保安全地访问
@@ -149,12 +149,12 @@ const showMessage = async (id, left, top) => {
 const afterDoComment = (comment) => Details.afterDoComment(comment)
 const close = () => {
   window.history.pushState({}, '', `/user/index/${userInfo.value.user.id}`);
-  document.title = userInfo.value.user.username + ' .Dlock'
+  document.title = userInfo.value.user.username
   show.value = false
 }
 onClickOutside(overlay, () => {
   window.history.pushState({}, "", `/user/index/${userInfo.value.user.id}`);
-  document.title = userInfo.value.user.username + ' .Dlock'
+  document.title = userInfo.value.user.username
   show.value = false;
 });
 let style = null;
@@ -387,7 +387,7 @@ const doUpdate = async () => {
   <div class="userInfo" v-if="userInfo.user">
     <el-row :gutter="10">
       <el-col :span="7" style="width: 20vw;">
-        <el-avatar :size="150" :src="userInfo.user.avatar"></el-avatar>
+        <el-avatar style="width: 10vw;height: 10vw;" :src="userInfo.user.avatar"></el-avatar>
       </el-col>
       <el-col :span="7" style="width: 15vw;">
         <h2>{{ userInfo.user.username }}</h2>
@@ -398,7 +398,7 @@ const doUpdate = async () => {
           <el-tag class="ml-2" type="warning" round>{{ userInfo.user.postsCount }} 笔记数</el-tag>
         </div>
       </el-col>
-      <el-col :span="5" style="width: 100px;">
+      <el-col :span="5">
         <template v-if="isOwnProfile">
           <el-button 
             type="primary" 
@@ -419,18 +419,18 @@ const doUpdate = async () => {
       </el-col>
     </el-row>
   </div>
-  <div class="checkBox" @change="Toggle">
+  <div class="checkBox" @change="Toggle" style="text-align: center">
     <template v-if="isOwnProfile">
-      <el-radio-group v-model="radio" size="large">
-        <el-radio-button class="radio" label="帖子" name="post"/>
-        <el-radio-button class="radio" label="收藏" name="collect"/>
-        <el-radio-button class="radio" label="点赞" name="like"/>
+      <el-radio-group v-model="radio"  size="large">
+        <el-radio-button class="radio" style="margin: 1vw;" label="帖子" name="post"/>
+        <el-radio-button class="radio" style="margin: 1vw;" label="收藏" name="collect"/>
+        <el-radio-button class="radio" style="margin: 1vw;" label="点赞" name="like"/>
     </el-radio-group>
   </template>
   </div>
 
 
-  <div style="margin-top: 30px;" v-if="userInfo.user">
+  <div v-if="userInfo.user">
     <div v-if="radio === '帖子'">
       <div v-if="userPost.length === 0">
         <el-empty description="现在还没有帖子..."/>
@@ -549,11 +549,11 @@ const doUpdate = async () => {
     </div>
     <div class="fileUpload">
       <el-form :model="form" ref="formRef" :rules="rules" label-position="top">
-        <el-form-item prop="username" label="昵称" label-width="100px" style="margin: 30px;">
+        <el-form-item prop="username" label="昵称" label-width="7vw" style="margin: 2vw;font-size: 100%;">
           <el-input v-model="form.username" maxlength="6"
                     show-word-limit class="my"/>
         </el-form-item>
-        <el-form-item prop="signature" label="个性签名" label-width="100px" style="margin: 30px;">
+        <el-form-item prop="signature" label="个性签名" label-width="7vw" style="margin: 2vw;">
           <el-input v-model="form.signature" class="my"/>
         </el-form-item>
       </el-form>
@@ -577,15 +577,54 @@ const doUpdate = async () => {
   align-items: center;
   justify-content: center;
 }
+@media screen and (max-width: 768px) {
+ .userInfo {
+   padding: 20px;
+ }
+
+ .el-row {
+   flex-direction: column;
+   align-items: center;
+ }
+
+ .el-col {
+   width: 100% !important;
+   margin-bottom: 20px;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   text-align: center;
+ }
+
+ .el-avatar {
+   width: 15vw;
+   height: 15vw;
+ }
+
+ .tagArea {
+   display: flex;
+   justify-content: center;
+   gap: 10px;
+   flex-wrap: wrap;
+   margin-top: 10px;
+ }
+
+ .update-btn,
+ .focusOn {
+   margin-top: 10px;
+   width: 120px;
+ }
+}
 
 .focusOn {
   align-items: center;
   justify-content: center;
-  width: 96px;
-  height: 40px;
-  line-height: 18px;
+  width: 6vw;
+  height: 2.5vw;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 100%;
+  min-width: 60px;
+  min-height: 25px;
   cursor: pointer;
   background-color: red;
   border-radius: 1000px;
@@ -612,17 +651,16 @@ const doUpdate = async () => {
 }
 
 .tagArea {
-  width: 400px;
+  width: 40vw;
 }
 
 .tagArea .ml-2 {
-  margin-right: 10px;
+  margin-right: 1vw;
 }
 
 .checkBox {
-  margin-top: 50px;
+  margin-top: 2vh;
   position: relative;
-  left: 40%;
 }
 
 .overlay {
@@ -636,16 +674,27 @@ const doUpdate = async () => {
 
 .backPage {
   position: fixed;
-  top: 5%;
+  top: 3%;
   left: 3%;
   justify-content: center;
   align-items: center;
-  width: 40px;
-  height: 40px;
+  width: 4vw;
+  height: 4vw;
+  max-width: 45px;
+  max-height: 45px;
   border-radius: 40px;
-  border: 1px solid var(--color-border);
   cursor: pointer;
   transition: all .3s;
+}
+
+@media screen and (max-width: 768px) {
+ .backPage {
+   top: 2%;
+   left: 2%;
+   width: 4vh;
+   height: 4vh;
+   border-radius: 35px;
+ }
 }
 
 .fade-enter-active {
@@ -659,11 +708,12 @@ const doUpdate = async () => {
 .update-btn {
   align-items: center;
   justify-content: center;
-  width: 96px;
-  height: 40px;
-  line-height: 18px;
+  width: 6vw;
+  height: 2.5vw;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 1.1vw;
+  min-width: 60px;
+  min-height: 25px;
   cursor: pointer;
   background-color: red;
   border-radius: 1000px;
@@ -672,7 +722,12 @@ const doUpdate = async () => {
   margin-top: 1rem;
   transition: all 0.3s;
 }
+@media screen and (max-width: 768px) {
+ .update-btn {
+  font-size: 80%;
 
+ }
+}
 .update-btn:hover {
   background-color: #fd5656;
 }
@@ -736,4 +791,6 @@ const doUpdate = async () => {
   justify-content: center;
   align-items: center;
 }
+
+
 </style>

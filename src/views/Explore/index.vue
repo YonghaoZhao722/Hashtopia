@@ -171,6 +171,17 @@ onMounted(async () => {
   transition: all .3s;
 }
 
+@media screen and (max-width: 768px) {
+ .backPage {
+   top: 2%;
+   left: 2%;
+   width: 4vh;
+   height: 4vh;
+   border-radius: 35px;
+ }
+}
+
+
 .fade-enter-active {
   animation: scale-up-center 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
 }
