@@ -34,38 +34,31 @@ const changeShow = () => {
       </RouterLink>
     </div>
 
-    <el-tooltip effect="dark" content="切换菜单样式" placement="right">
       <div class="actionsBar">
         <div>
           <button id="menuBtn" type="button" @click="toggleMenu"><i class="iconfont icon-hanbaocaidan"></i></button>
           <h3 class="menuText" :class="{ open2: isMenuOpen }">{{ userStore.userInfo.username }}</h3>
         </div>
       </div>
-    </el-tooltip>
     <ul class="optionsBar">
       <li class="menuItem">
-        <el-tooltip effect="dark" content="主页" placement="right">
           <RouterLink to="/" class="menuOption">
             <i class="iconfont icon-shouye"></i>
             <h5 class="menuText" :class="{ open2: isMenuOpen }">主页</h5>
           </RouterLink>
-        </el-tooltip>
       </li>
       <li class="menuBreak">
         <hr>
       </li>
       <li class="menuItem">
-        <el-tooltip effect="dark" content="发布" placement="right">
           <RouterLink to="/user/uploads" class="menuOption">
             <el-icon size="x-large">
               <Promotion/>
             </el-icon>
             <h5 class="menuText" :class="{ open2: isMenuOpen }">发布</h5>
           </RouterLink>
-        </el-tooltip>
       </li>
       <li class="menuItem" v-if="userStore.userInfo.id">
-        <el-tooltip effect="dark" content="个人帖子管理" placement="right">
           <RouterLink to="/user/control">
             <div class="menuOption">
               <el-icon size="x-large">
@@ -74,12 +67,9 @@ const changeShow = () => {
               <h5 class="menuText" :class="{ open2: isMenuOpen }">个人帖子管理</h5>
             </div>
           </RouterLink>
-        </el-tooltip>
       </li>
     </ul>
-    <div class="about" id="about">
-    </div>
-    <div v-if="userStore.userInfo.id">
+    <div v-if="userStore.userInfo.id" class="menuBottom">
       <div class="menuUser">
         <RouterLink :to="`/user/index/${userStore.userInfo.id}`">
           <div>
@@ -91,7 +81,6 @@ const changeShow = () => {
         </RouterLink>
       </div>
       <div class="themeBar">
-        <el-tooltip effect="dark" content="退出登录" placement="right">
           <div>
             <el-popconfirm @confirm="confirm" title="确认退出吗?" confirm-button-text="确认"
                            cancel-button-text="取消">
@@ -100,11 +89,9 @@ const changeShow = () => {
               </template>
             </el-popconfirm>
           </div>
-        </el-tooltip>
       </div>
     </div>
     <div v-else>
-      <el-tooltip effect="dark" content="登录" placement="right">
         <div class="themeBar">
           <div>
             <button title="登录" type="button" @click="changeShow">
@@ -114,7 +101,6 @@ const changeShow = () => {
             </button>
           </div>
         </div>
-      </el-tooltip>
     </div>
   </nav>
   <div class="overlay" v-if="show">
@@ -135,10 +121,6 @@ const changeShow = () => {
   width: 100%;
 }
 
-.fileUpload button {
-  margin-left: 20px;
-  margin-bottom: 20px;
-}
 
 .overlay {
   position: fixed;
@@ -170,14 +152,15 @@ const changeShow = () => {
 }
 
 .menu {
+  max-width: 300px;
   position: absolute;
   width: 60px;
-  height: auto;
+  height: 96vh;
   background-color: #f6f3f3;
   z-index: 2;
-  top: 10px;
+  top: 1vh;
   bottom: 0;
-  left: 10px;
+  left: 2vw;
   margin: auto;
   border-radius: 0.8rem;
   transition: 0.3s ease 0.15s;
@@ -239,14 +222,14 @@ const changeShow = () => {
 }
 
 .logoSection img {
-  width: 40px;
-  height: 40px;
+  width: auto;
+  height: 4vh;
   transition: 0.3s ease;
 }
 
 .menu.open .logoSection img {
-  width: 60px;
-  height: 60px;
+  width: auto;
+  height: 6vh;
 }
 
 .menu .optionsBar {
@@ -261,7 +244,7 @@ const changeShow = () => {
 
 .menu .optionsBar .menuItem {
   width: 100%;
-  height: 45px;
+  height: 5vh;
   margin: 0.3rem;
 }
 
@@ -308,23 +291,16 @@ const changeShow = () => {
   transition: transform 0.3s ease 0.1s;
 }
 
-.menu .about {
-  width: 100%;
-  height: 10%;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 1rem;
-  flex-direction: column;
-  font-family: sans-serif;
-  opacity: 0;
-  white-space: nowrap;
-  transition: 0.3s ease 0.15s;
-}
 
 .menu.open {
-  width: 240px;
+  width: 20vw;
   opacity: 1;
+}
+
+@media screen and (max-width: 768px) {
+  .menu.open {
+    width: 50vw;
+  }
 }
 
 .menuText.open2 {
@@ -335,7 +311,7 @@ const changeShow = () => {
 
 .menu .menuBreak {
   width: 100%;
-  height: 10px;
+  height: 1vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -343,7 +319,7 @@ const changeShow = () => {
 
 .menu .menuBreak hr {
   width: 70%;
-  height: 3px;
+  height: 0.3vh;
   background-color: #000;
   border: none;
   border-radius: 5px;
@@ -385,6 +361,7 @@ const changeShow = () => {
 }
 
 .menu .menuUser {
+  position: relative;
   width: 100%;
   height: 10%;
 }
@@ -428,6 +405,12 @@ const changeShow = () => {
 
 }
 
+.icon-youjiantou{
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
 @keyframes animArrow {
   0% {
     transform: translateX(0);
@@ -442,33 +425,17 @@ const changeShow = () => {
   }
 }
 
-.menu .menuUser .userInfo {
-  position: absolute;
-  width: 20rem;
-  height: 18rem;
-  opacity: 0;
-  pointer-events: none;
-  top: 34%;
-  left: 1.5rem;
-  transition: 0.3s ease;
-  transform: scale(0);
-  transform-origin: bottom left;
-}
-
 .menu .menuUser:hover .userInfo {
   pointer-events: all;
   opacity: 1;
   transform: scale(1);
-  color: #F19FA3;
+  color: #f0474f;
 }
 
 .el-button--text {
   margin-right: 15px;
 }
 
-.el-select {
-  width: 300px;
-}
 
 .el-input {
   width: 300px;
@@ -476,5 +443,11 @@ const changeShow = () => {
 
 .dialog-footer button:first-child {
   margin-right: 10px;
+}
+
+.menuBottom {
+ position: fixed;
+ bottom: 4vh;
+ width: inherit;
 }
 </style>
