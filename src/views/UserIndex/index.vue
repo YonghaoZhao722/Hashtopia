@@ -386,10 +386,10 @@ const doUpdate = async () => {
 <template>
   <div class="userInfo" v-if="userInfo.user">
     <el-row :gutter="10">
-      <el-col :span="7" style="width: 250px;">
+      <el-col :span="7" style="width: 20vw;">
         <el-avatar :size="150" :src="userInfo.user.avatar"></el-avatar>
       </el-col>
-      <el-col :span="7" style="width: 250px!important;">
+      <el-col :span="7" style="width: 15vw;">
         <h2>{{ userInfo.user.username }}</h2>
         <p>{{ userInfo.user.signature }}</p>
         <div class="tagArea">
@@ -420,13 +420,13 @@ const doUpdate = async () => {
     </el-row>
   </div>
   <div class="checkBox" @change="Toggle">
-    <el-radio-group v-model="radio" size="large">
-      <el-radio-button class="radio" label="帖子" name="post"/>
-      <template v-if="isOwnProfile">
+    <template v-if="isOwnProfile">
+      <el-radio-group v-model="radio" size="large">
+        <el-radio-button class="radio" label="帖子" name="post"/>
         <el-radio-button class="radio" label="收藏" name="collect"/>
         <el-radio-button class="radio" label="点赞" name="like"/>
-      </template>
     </el-radio-group>
+  </template>
   </div>
 
 
