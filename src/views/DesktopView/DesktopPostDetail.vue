@@ -295,11 +295,12 @@ onMounted(() => load())
 .content {
   margin: 0;
   font-weight: 400;
-  font-size: 1vw;
+  font-size: 1.1vw;
   line-height: 2vw;
   color: #333;
   white-space: pre-wrap;
   overflow-wrap: break-word;
+  margin: 3%;
 }
 
 .more {

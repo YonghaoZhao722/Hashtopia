@@ -330,51 +330,6 @@ api：/post/
                 "avatar": "http://localhost:8000/static/img/avatar/12-113-1000g00823brn0aifq06g5nt1f31g8cpb1n1m0.jpg"
             }
         },
-        {
-            "title": "python学习",
-            "id": 117,
-            "img": "http://localhost:8000/static/img/post/117-1000g0082dv0lhf4gs0005o8flhd0bq6948mst.jpg",
-            "img_info": {
-                "height": 1707,
-                "width": 1280
-            },
-            "load": false,
-            "user": {
-                "id": 12,
-                "username": "测试用户1",
-                "avatar": "http://localhost:8000/static/img/avatar/12-113-1000g00823brn0aifq06g5nt1f31g8cpb1n1m0.jpg"
-            }
-        },
-        {
-            "title": "好漂亮！！！",
-            "id": 116,
-            "img": "http://localhost:8000/static/img/post/116-1000g008285e08k2fu0005ovmamnjq23g55p7j.jpg",
-            "img_info": {
-                "height": 960,
-                "width": 960
-            },
-            "load": false,
-            "user": {
-                "id": 12,
-                "username": "测试用户1",
-                "avatar": "http://localhost:8000/static/img/avatar/12-113-1000g00823brn0aifq06g5nt1f31g8cpb1n1m0.jpg"
-            }
-        },
-        {
-            "title": "可爱可爱",
-            "id": 115,
-            "img": "http://localhost:8000/static/img/post/115-1000g0082nbg996mji0005no6tlq08rku6ca0m.jpg",
-            "img_info": {
-                "height": 1350,
-                "width": 1080
-            },
-            "load": false,
-            "user": {
-                "id": 12,
-                "username": "测试用户1",
-                "avatar": "http://localhost:8000/static/img/avatar/12-113-1000g00823brn0aifq06g5nt1f31g8cpb1n1m0.jpg"
-            }
-        }
     ]
 }
 ```

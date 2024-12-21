@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, ref} from "vue";
+import {onMounted, ref, nextTick} from "vue";
 import HomeCard from "@/components/homeCard.vue";
 import {Back} from "@element-plus/icons-vue";
 import CardDetail from "@/components/cardDetail.vue";
@@ -13,26 +13,43 @@ const Details = controlDetail()
 
 // 主页卡片 //////////////////////////////////////////////////////////////////
 const cards = ref([]);
-const disabled = ref(true); // 初始禁用滚动加载
+const loading = ref(false); // 加载状态
+const hasMore = ref(true); // 是否还有更多数据
 
 // 主页获取帖子
 const doQuery = async (offset) => {
-  const res = await queryPost({offset, query});
+  const res = await queryPost({
+    offset,
+    query
+  });
   cards.value = res.info;
-  disabled.value = false; // 启用滚动加载
+  hasMore.value = res.has_more; // 使用后端返回的has_more标志
 };
 
-// 无限滚动
-const load = async () => {
-  disabled.value = true;
-  const offset = cards.value.length;
-  const res = await queryPost({offset, query});
-  const more = res.info;
-  if (more.length === 0) {
-    disabled.value = true; // 没有更多数据，禁用滚动加载
-  } else {
-    cards.value = [...cards.value, ...more];
-    disabled.value = false;
+const pageSize = 10;
+// 加载更多
+const loadMore = async () => {
+  if (loading.value || !hasMore.value) return;
+  
+  loading.value = true;
+  try {
+    const offset = cards.value.length;
+    const res = await queryPost({
+      offset,
+      query
+    });
+    const more = res.info;
+    
+    if (more.length < pageSize) {
+      hasMore.value = false;
+    }
+    if (more.length > 0) {
+      cards.value = [...cards.value, ...more];
+    }
+  } catch (error) {
+    console.error('加载失败:', error);
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -50,14 +67,12 @@ const showMessage = async (id, left, top) => {
   overlayY.value = top;
   await getDetails(id);
   show.value = true;
+  // 确保在显示后添加返回按钮
+  await nextTick();
+  addBackPage();
 };
 
-const afterDoComment = (comment) => Details.afterDoComment(comment)
-const close = () => {
-  window.history.pushState({}, "", "/");
-  show.value = false;
-  document.title = '欢迎来到Dlock!'
-};
+const afterDoComment = (comment) => Details.afterDoComment(comment);
 
 onClickOutside(overlay, () => {
   window.history.pushState({}, "", "/");
@@ -84,11 +99,48 @@ const onBeforeEnter = () => {
   document.head.appendChild(style);
 }
 
+const addBackPage = () => {
+  nextTick(() => {
+    const backButton = document.querySelector('.backPage');
+    if (backButton) {
+      backButton.style.display = 'block'; // 改为 block 确保显示
+    }
+  });
+};
+
+const handleOverlayClose = () => {
+  close();
+  const backButton = document.querySelector('.backPage');
+  if (backButton) {
+    backButton.style.display = 'none';
+  }
+  // 恢复导航栏显示
+  const navigationElements = document.querySelectorAll('.menu,.el-header');
+  navigationElements.forEach(el => {
+    el.style.display = '';
+  });
+};
+
+// 修改 close 函数
+const close = () => {
+  window.history.pushState({}, "", "/");
+  show.value = false;
+  document.title = '欢迎来到Dlock!'
+  // 恢复导航栏显示
+  const navigationElements = document.querySelectorAll('.menu,.el-header');
+  navigationElements.forEach(el => {
+    el.style.display = '';
+  });
+};
+
+// 更新 onAfterEnter
 const onAfterEnter = (el) => {
-  el.style = 'background-color: #fff'
-  const button = el.querySelector('.backPage')
-  button.style.display = ''
-}
+  el.style = 'background-color: #fff';
+  const backButton = el.querySelector('.backPage');
+  if (backButton) {
+    backButton.style.display = '';
+  }
+};
 
 const onBeforeLeave = (el) => {
   const button = el.querySelector('.backPage')
@@ -103,9 +155,19 @@ const onAfterLeave = () => {
   }
 }
 
+
 onMounted(async () => {
   await doQuery(0);
+  if (window.location.pathname.includes('/explore/')) {
+    const id = window.location.pathname.split('/').pop();
+    await getDetails(id);
+    show.value = true;
+    await nextTick();
+    addBackPage();
+  }
 });
+
+
 </script>
 
 <template>
@@ -113,25 +175,37 @@ onMounted(async () => {
     <el-empty description="没有帖子..."/>
   </div>
   <div v-else>
-    <div v-infinite-scroll="load" :infinite-scroll-disabled="disabled" :infinite-scroll-distance="200">
-      <home-card :list="cards" @show-detail="showMessage" ref="homeCardRef"></home-card>
+    <home-card :list="cards" 
+  :loading="loading"
+  :has-more="hasMore"
+  @show-detail="showMessage"
+  @load-more="loadMore"
+  ref="homeCardRef"></home-card>
+    
+    
+
+  <transition
+      name="fade"
+      @before-enter="onBeforeEnter"
+      @after-enter="onAfterEnter"
+      @before-leave="onBeforeLeave"
+      @after-leave="onAfterLeave"
+  >
+    <div class="overlay" v-if="show">
+      <button class="backPage" @click="close" style="display: none;">
+        <el-icon>
+          <Back/>
+        </el-icon>
+      </button>
+      <card-detail 
+        :detail="detail" 
+        @afterDoComment="afterDoComment" 
+        @needBackPage="addBackPage"
+        @closeOverlay="handleOverlayClose" 
+        ref="overlay"
+      />
     </div>
-    <transition
-        name="fade"
-        @before-enter="onBeforeEnter"
-        @after-enter="onAfterEnter"
-        @before-leave="onBeforeLeave"
-        @after-leave="onAfterLeave"
-    >
-      <div class="overlay" v-if="show">
-        <button style="display:none;" class="backPage" @click="close">
-          <el-icon>
-            <Back/>
-          </el-icon>
-        </button>
-        <card-detail :detail="detail" @afterDoComment="afterDoComment" ref="overlay"/>
-      </div>
-    </transition>
+  </transition>
   </div>
 </template>
 
@@ -144,31 +218,74 @@ onMounted(async () => {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  background: white;
   z-index: 9999;
+  display: flex;
+  flex-direction: column;
 }
 
 .backPage {
-  position: fixed;
-  top: 5%;
-  left: 3%;
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  display: flex !important;
   justify-content: center;
   align-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 40px;
-  border: 1px solid var(--color-border);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
   cursor: pointer;
-  transition: all .3s;
+  border: none;
+  z-index: 10000;
+}
+
+.backPage .el-icon {
+  font-size: 20px;
+  color: #666; /* 灰色图标 */
+}
+
+/* 添加hover效果 */
+.backPage:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* 添加card-detail的样式 */
+.card-detail {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  margin-top: 48px; /* 为顶部返回按钮留出空间 */
+}
+
+
+
+/* 加载更多按钮样式 */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  padding: 10px;
+}
+
+.load-more-btn {
+  min-width: 120px;
+}
+
+.no-more {
+  color: #909399;
+  font-size: 14px;
+  text-align: center;
 }
 
 @media screen and (max-width: 768px) {
   .backPage {
-    top: 2%;
+    top: 12px;
     left: 2%;
-    width: 4vh;
-    height: 4vh;
     border-radius: 35px;
   }
 }

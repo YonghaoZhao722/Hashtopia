@@ -1,7 +1,11 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import DesktopView from '@/views/DesktopView/DesktopPostDetail.vue';  // 原来的桌面端组件
-import MobileView from '@/views/MobileView/MobilePostDetail.vue';     // 之前创建的移动端组件
+import { ref, onMounted, onUnmounted, defineAsyncComponent, watch, nextTick } from 'vue';
+import { useRoute } from 'vue-router';
+
+const DesktopView = defineAsyncComponent(() => import('@/views/DesktopView/DesktopPostDetail.vue'))
+const MobileView = defineAsyncComponent(() => import('@/views/MobileView/MobilePostDetail.vue'))
+
+const emit = defineEmits(['needBackPage', 'closeOverlay', 'mounted', 'afterDoComment'])
 
 const props = defineProps({
   detail: {
@@ -14,28 +18,86 @@ const props = defineProps({
   }
 });
 
-const isMobile = ref(false);
+const isMobile = ref(window.innerWidth <= 768);
 
 const checkDevice = () => {
-  // 使用768px作为移动设备的断点
   isMobile.value = window.innerWidth <= 768;
 };
 
-// 监听窗口大小变化
-onMounted(() => {
+// Add a ref to track the component's mounted state
+const isMounted = ref(false);
+
+const hideNavigation = async () => {
+  await nextTick(); // Ensure DOM is updated
+  const navigationElements = document.querySelectorAll('.menu,.el-header');
+  navigationElements.forEach(el => {
+    if (el) el.style.display = 'none';
+  });
+};
+
+const showNavigation = () => {
+  const navigationElements = document.querySelectorAll('.menu,.el-header');
+  navigationElements.forEach(el => {
+    if (el) el.style.display = 'block'; // Be explicit with display value
+  });
+};
+
+const handleComponentMounted = async () => {
+  if (!isMounted.value) {
+    isMounted.value = true;
+    await hideNavigation();
+    emit('needBackPage');
+    emit('mounted');
+  }
+};
+
+onMounted(async () => {
   checkDevice();
   window.addEventListener('resize', checkDevice);
+  await handleComponentMounted();
 });
+
+
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkDevice);
+  showNavigation();
 });
+
+// 监听 overlay 关闭
+const handleClose = () => {
+  showNavigation();
+  emit('closeOverlay');
+};
+
+const route = useRoute();
+watch(() => route.path, async () => {
+  await nextTick();
+  hideNavigation();
+  emit('needBackPage');
+});
+
+// 添加 Suspense fallback 处理
+const handleFallback = () => {
+  hideNavigation();
+  emit('needBackPage');
+};
 </script>
 
 <template>
-  <component 
-    :is="isMobile ? MobileView : DesktopView"
-    :detail="detail"
-    :review="review"
-  />
+  <Suspense @fallback="handleFallback">
+    <template #default>
+      <component 
+        :is="isMobile ? MobileView : DesktopView"
+        :detail="detail"
+        :review="review"
+        @mounted="handleComponentMounted"
+        @close="handleClose"
+        @after-do-comment="handleAfterComment"
+      />
+    </template>
+    <template #fallback>
+      <div>Loading...</div>
+    </template>
+  </Suspense>
 </template>

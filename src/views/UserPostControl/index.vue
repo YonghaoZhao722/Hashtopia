@@ -1,5 +1,5 @@
 <script setup xmlns="http://www.w3.org/1999/html">
-import {computed, onBeforeMount, onMounted, ref} from 'vue'
+import {computed, onBeforeMount, onMounted, ref, onBeforeUnmount} from 'vue'
 import {queryUserPostControl, postDelete, controlUserCollectOrLike, unFollow, removeFan} from "@/apis/main";
 import {ElMessage} from 'element-plus'
 import {useUserStore} from "@/stores/user";
@@ -21,8 +21,14 @@ onBeforeMount(() => checkLogin())
 const locale = zhCn
 const tableStore = useTableStore();
 const loading = ref(true)
+const isMobile = ref(false)
 // 控制选择器 /////////////////////////////////////////////////////
 const value = ref('posts')
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
 const options = [
   {
     label: '帖子管理',
@@ -149,7 +155,39 @@ const handleDelete = async (index, row) => {
   }
 }
 ////////////////////////////////////////////////////////////////
-
+const getTableColumns = computed(() => {
+  if (isMobile.value) {
+    return type.value === 1 ? [
+      { type: 'selection', width: '55' },
+      { label: '标题', prop: 'title' },
+      { label: '操作', slot: 'operation', align: 'center' }
+    ] : [
+      { type: 'selection', width: '55' },
+      { label: '用户名', prop: 'username' },
+      { label: '操作', slot: 'operation', align: 'center' }
+    ]
+  }
+  
+  return type.value === 1 ? [
+    { type: 'selection', width: '55' },
+    { label: '日期', prop: 'date', sortable: true },
+    { label: '作者', prop: 'username' },
+    { label: '标题', prop: 'title' },
+    { label: '内容', prop: 'content', showOverflowTooltip: true },
+    { label: '评论量', prop: 'commentCount', sortable: true },
+    { label: '点赞量', prop: 'likeCount', sortable: true },
+    { label: '收藏量', prop: 'collectCount', sortable: true },
+    { label: '操作', slot: 'operation', align: 'center' }
+  ] : [
+    { type: 'selection', width: '55' },
+    { label: '头像', slot: 'avatar', align: 'center' },
+    { label: '用户名', prop: 'username', sortable: true, showOverflowTooltip: true },
+    { label: '粉丝量', prop: 'fans' },
+    { label: '关注量', prop: 'follow' },
+    { label: '笔记数', prop: 'note' },
+    { label: '操作', slot: 'operation', align: 'center' }
+  ]
+})
 // 分页器 ///////////////////////////////////////////////////////
 const pageSize = ref(10)
 const currentPage = ref(1)
@@ -194,152 +232,206 @@ const handleCurrentChange = async (val) => {
 };
 //////////////////////////////////////////////////////////////////
 onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
   getData()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
 })
 </script>
 
 <template>
   <el-config-provider :locale="locale">
-
-    <el-select
-        v-model="value"
-        placeholder="Select"
-        @change="changeShow"
-        style="margin-bottom: 20px"
-    >
-      <template #prefix>
-        <el-tooltip
-            placement="top"
-            effect="light"
+    <div class="container">
+      <div class="select-container">
+        <el-select
+            v-model="value"
+            placeholder="Select"
+            @change="changeShow"
+            :style="{ width: isMobile ? '100%' : '200px' }"
         >
-          <template #content>
-            <h2 style="color:red;">表格内容会缓存到本地</h2>
-            <p>如果进行
-              <span style="color:red;">修改数据</span>
-              没有更新
-              <span style="color:red;">刷新就可以了</span>
-            </p>
+          <template #prefix>
+            <el-tooltip
+                placement="top"
+                effect="light"
+            >
+              <template #content>
+                <h2 style="color:red;">表格内容会缓存到本地</h2>
+                <p>如果进行
+                  <span style="color:red;">修改数据</span>
+                  没有更新
+                  <span style="color:red;">刷新就可以了</span>
+                </p>
+              </template>
+              <el-icon>
+                <info-filled/>
+              </el-icon>
+            </el-tooltip>
           </template>
-          <el-icon>
-            <info-filled/>
-          </el-icon>
-        </el-tooltip>
-      </template>
-      <el-option-group
-          v-for="group in options"
-          :key="group.label"
-          :label="group.label"
-      >
-        <el-option
-            v-for="item in group.options"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-        />
-      </el-option-group>
-    </el-select>
-    <div style="display:flex;align-items: center;flex-direction: column" v-if="type === 1">
-      <el-table
-          :data="tableData"
-          style="width: 100%"
-          ref="tableRef"
-          :default-sort="{ prop: 'date', order: 'descending' }"
-          @selection-change="handleSelectionChange"
-          v-loading="loading"
-          border
-          stripe
-      >
-        <el-table-column type="selection" width="55"/>
-        <el-table-column label="日期" sortable prop="date"/>
-        <el-table-column label="作者" prop="username"/>
-        <el-table-column label="标题" prop="title"/>
-        <el-table-column label="内容" prop="content" :show-overflow-tooltip='true'/>
-        <el-table-column label="评论量" sortable prop="commentCount"/>
-        <el-table-column label="点赞量" sortable prop="likeCount"/>
-        <el-table-column label="收藏量" sortable prop="collectCount"/>
-        <el-table-column align="center" label="操作">
-          <template #default="scope">
-            <el-button
-                size="small"
-                type="danger"
-                @click="handleDelete(scope.$index, scope.row)">
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <div style="margin-top: 20px" v-show="multipleSelection.length !== 0">
-        <el-button disabled round>选中删除</el-button>
-        <el-button @click="tableRef.clearSelection()" round>清空全选</el-button>
+          <el-option-group
+              v-for="group in options"
+              :key="group.label"
+              :label="group.label"
+          >
+            <el-option
+                v-for="item in group.options"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+            />
+          </el-option-group>
+        </el-select>
       </div>
-      <div class="pageArea">
-        <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :background="true"
-            layout="prev, pager, next, jumper"
-            :total="total_post"
-            @current-change="handleCurrentChange"
-        />
-      </div>
-    </div>
-    <div style="display:flex;align-items: center;flex-direction: column" v-else>
-      <el-table
-          :data="userData"
-          style="width: 100%"
-          ref="tableRef"
-          @selection-change="handleSelectionChange"
-          border
-          v-loading="loading"
-          stripe
-      >
-        <el-table-column type="selection" width="55"/>
-        <el-table-column align="center" label="头像">
-          <template #default="scope">
-            <el-avatar :src="scope.row.avatar"></el-avatar>
+
+      <div class="table-container" v-if="type === 1">
+        <el-table
+            :data="tableData"
+            style="width: 100%"
+            ref="tableRef"
+            :default-sort="{ prop: 'date', order: 'descending' }"
+            @selection-change="handleSelectionChange"
+            v-loading="loading"
+            border
+            stripe
+            :size="isMobile ? 'small' : 'default'"
+        >
+          <template v-for="col in getTableColumns" :key="col.prop || col.type">
+            <el-table-column v-bind="col">
+              <template #default="scope" v-if="col.slot === 'operation'">
+                <el-button
+                    :size="isMobile ? 'small' : 'default'"
+                    type="danger"
+                    @click="handleDelete(scope.$index, scope.row)">
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
           </template>
-        </el-table-column>
-        <el-table-column label="用户名" sortable prop="username" :show-overflow-tooltip='true'/>
-        <el-table-column label="粉丝量" prop="fans"/>
-        <el-table-column label="关注量" prop="follow"/>
-        <el-table-column label="笔记数" prop="note"/>
-        <el-table-column align="center" label="操作">
-          <template #default="scope">
-            <el-button
-                size="small"
-                type="danger"
-                @click="handleDelete(scope.$index, scope.row)">
-              移除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <div style="margin-top: 20px" v-show="multipleSelection.length !== 0">
-        <el-button disabled round>选中删除</el-button>
-        <el-button @click="tableRef.clearSelection()" round>清空全选</el-button>
+        </el-table>
+
+        <div class="action-buttons" v-show="multipleSelection.length !== 0">
+          <el-button disabled round :size="isMobile ? 'small' : 'default'">选中删除</el-button>
+          <el-button @click="tableRef.clearSelection()" round :size="isMobile ? 'small' : 'default'">清空全选</el-button>
+        </div>
+
+        <div class="pagination">
+          <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :background="true"
+              layout="prev, pager, next, jumper"
+              :total="total_post"
+              @current-change="handleCurrentChange"
+              :small="isMobile"
+          />
+        </div>
       </div>
-      <div class="pageArea">
-        <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :background="true"
-            layout="prev, pager, next, jumper"
-            :total="total_user"
-            @current-change="handleCurrentChange"
-        />
+
+      <div class="table-container" v-else>
+        <el-table
+            :data="userData"
+            style="width: 100%"
+            ref="tableRef"
+            @selection-change="handleSelectionChange"
+            border
+            v-loading="loading"
+            stripe
+            :size="isMobile ? 'small' : 'default'"
+        >
+          <template v-for="col in getTableColumns" :key="col.prop || col.type">
+            <el-table-column v-bind="col">
+              <template #default="scope" v-if="col.slot === 'avatar'">
+                <el-avatar :size="isMobile ? 'small' : 'default'" :src="scope.row.avatar"></el-avatar>
+              </template>
+              <template #default="scope" v-if="col.slot === 'operation'">
+                <el-button
+                    :size="isMobile ? 'small' : 'default'"
+                    type="danger"
+                    @click="handleDelete(scope.$index, scope.row)">
+                  移除
+                </el-button>
+              </template>
+            </el-table-column>
+          </template>
+        </el-table>
+
+        <div class="action-buttons" v-show="multipleSelection.length !== 0">
+          <el-button disabled round :size="isMobile ? 'small' : 'default'">选中删除</el-button>
+          <el-button @click="tableRef.clearSelection()" round :size="isMobile ? 'small' : 'default'">清空全选</el-button>
+        </div>
+
+        <div class="pagination">
+          <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :background="true"
+              layout="prev, pager, next, jumper"
+              :total="total_user"
+              @current-change="handleCurrentChange"
+              :small="isMobile"
+          />
+        </div>
       </div>
     </div>
   </el-config-provider>
 </template>
 
 <style scoped>
-.pageArea {
-  margin-top: 20px;
+.container {
+  width: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
-.item {
-  margin-top: 10px;
-  margin-right: 40px;
+.select-container {
+  margin-bottom: 1.25rem;
 }
 
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.action-buttons {
+  margin-top: 1.25rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.pagination {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* Mobile Styles */
+@media screen and (max-width: 768px) {
+  .container {
+    padding: 0.5rem;
+  }
+
+  .select-container {
+    margin-bottom: 1rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .action-buttons .el-button {
+    width: 100%;
+    max-width: 200px;
+  }
+}
+
+/* Tablet Styles */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    padding: 0.75rem;
+  }
+}
 </style>

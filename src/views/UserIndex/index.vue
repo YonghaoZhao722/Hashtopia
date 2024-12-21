@@ -8,10 +8,11 @@ import { genFileId } from 'element-plus'
 import {doFocus, queryUserIndex, queryUserPost, unFollow, queryUserFocus, updateUserInfo} from "@/apis/main";
 import {controlDetail} from "@/stores/controlDetail";
 import {onClickOutside} from "@vueuse/core";
-import {resizeWaterFall, waterFallInit, waterFallMore} from "@/utils/waterFall";
 import {useUserStore} from "@/stores/user";
 import {ElMessage} from "element-plus";
-
+import { LazyImg, Waterfall } from 'vue-waterfall-plugin-next'
+import 'vue-waterfall-plugin-next/dist/style.css'
+import '../../styles/common.css'
 const route = useRoute()
 const Details = controlDetail()
 const userStore = useUserStore()
@@ -65,70 +66,63 @@ const radio = ref('帖子')
 const userPost = ref([])
 const userCollect = ref([])
 const userFavorite = ref([])
-const disabled = ref(true); // 初始禁用滚动加载
 
-const columns = ref(0)
-const card_columns_posts = ref({})
-const card_columns_like = ref({})
-const card_columns_collect = ref({})
-const arrHeight = ref([])
+const loading = ref(false)
+const hasMore = ref(true)
 
 
 const Toggle = async () => {
+  loading.value = true
+  hasMore.value = true // 重置hasMore状态
   const user_id = route.params.id
   const offset = 0
   const types = radio.value
-  if (radio.value === '帖子' && userPost.value.length === 0) {
-    const post = await queryUserPost({user_id, types, offset})
-    userPost.value = post.info
-    waterFallInit(columns, card_columns_posts, arrHeight, userPost)
-  } else if (radio.value === '收藏' && userCollect.value.length === 0) {
-    const post = await queryUserPost({user_id, types, offset})
-    userCollect.value = post.info
-    waterFallInit(columns, card_columns_collect, arrHeight, userCollect)
-  } else if (radio.value === '点赞' && userFavorite.value.length === 0) {
-    const post = await queryUserPost({user_id, types, offset})
-    userFavorite.value = post.info
-    waterFallInit(columns, card_columns_like, arrHeight, userFavorite)
+  
+  try {
+    if (radio.value === '帖子' && userPost.value.length === 0) {
+      const post = await queryUserPost({user_id, types, offset})
+      userPost.value = post.info
+      hasMore.value = post.has_more
+    } else if (radio.value === '收藏' && userCollect.value.length === 0) {
+      const post = await queryUserPost({user_id, types, offset})
+      userCollect.value = post.info
+      hasMore.value = post.has_more
+    } else if (radio.value === '点赞' && userFavorite.value.length === 0) {
+      const post = await queryUserPost({user_id, types, offset})
+      userFavorite.value = post.info
+      hasMore.value = post.has_more
+    }
+  } catch (error) {
+    console.error('加载失败:', error)
+  } finally {
+    loading.value = false
   }
-  disabled.value = false;
 }
+
 const load = async () => {
-  disabled.value = true;
-  const user_id = userInfo.value.user.id;
-  const types = radio.value;
-  if (types === '帖子') {
-    const offset = userPost.value.length;
-    const post = await queryUserPost({user_id, types, offset});
-    if (post.info.length === 0) {
-      disabled.value = true;
-    } else {
-      userPost.value = [...userPost.value, ...post.info];
-      waterFallMore(arrHeight, card_columns_posts, post.info)
-      disabled.value = false;
+  if (loading.value || !hasMore.value) return
+  
+  loading.value = true
+  try {
+    const user_id = userInfo.value.user.id
+    const types = radio.value
+    let currentList = radio.value === '帖子' ? userPost : 
+                     radio.value === '收藏' ? userCollect : userFavorite
+    
+    const offset = currentList.value.length
+    const result = await queryUserPost({user_id, types, offset})
+    
+    if (result.info.length > 0) {
+      currentList.value = [...currentList.value, ...result.info]
     }
-  } else if (types === '点赞') {
-    const offset = userFavorite.value.length;
-    const like = await queryUserPost({user_id, types, offset});
-    if (like.info.length === 0) {
-      disabled.value = true;
-    } else {
-      userFavorite.value = [...userFavorite.value, ...like.info];
-      waterFallMore(arrHeight, card_columns_like, like.info)
-      disabled.value = false;
-    }
-  } else if (types === '收藏') {
-    const offset = userCollect.value.length;
-    const collect = await queryUserPost({user_id, types, offset});
-    if (collect.info.length === 0) {
-      disabled.value = true;
-    } else {
-      userCollect.value = [...userCollect.value, ...collect.info];
-      waterFallMore(arrHeight, card_columns_collect, collect.info)
-      disabled.value = false;
-    }
+    hasMore.value = result.has_more
+  } catch (error) {
+    console.error('加载更多失败:', error)
+  } finally {
+    loading.value = false
   }
-};
+}
+
 // 主页切换标签结束 ///////////////////////////////////////////////////////////
 
 // 卡片详情页的内容 //////////////////////////////////////////////////////////
@@ -190,16 +184,7 @@ const onAfterLeave = () => {
     style = null;
   }
 }
-// 卡片详情页的内容结束 //////////////////////////////////////////////////////////
-const resize = () => {
-  if (radio.value === '帖子') {
-    resizeWaterFall(columns, card_columns_posts, arrHeight, userPost)
-  } else if (radio.value === '收藏') {
-    resizeWaterFall(columns, card_columns_collect, arrHeight, userCollect)
-  } else if (radio.value === '点赞') {
-    resizeWaterFall(columns, card_columns_like, arrHeight, userFavorite)
-  }
-}
+
 onMounted(async () => {
   await getUserInfo()
   // 确保 userFocus 被初始化
@@ -216,7 +201,6 @@ onMounted(async () => {
     }
   }
   await Toggle()
-  resize()
 })
 
 // 添加状态控制
@@ -430,84 +414,98 @@ const doUpdate = async () => {
   </div>
 
 
-  <div v-if="userInfo.user">
+  <div class="radio" v-if="userInfo.user">
     <div v-if="radio === '帖子'">
       <div v-if="userPost.length === 0">
         <el-empty description="现在还没有帖子..."/>
       </div>
-      <div v-infinite-scroll="load" :infinite-scroll-disabled="disabled" :infinite-scroll-delay="200"
-           :infinite-scroll-distance="100"
-           v-else>
-        <home-card :card_columns="card_columns_posts" @show-detail="showMessage"></home-card>
+      <div v-else  class="scroll-container">
+        <home-card 
+          :list="userPost" 
+          :loading="loading"
+          :has-more="hasMore"
+          @show-detail="showMessage"
+          @load-more="load"
+        ></home-card>
       </div>
       <transition
-          name="fade"
-          @before-enter="onBeforeEnter"
-          @after-enter="onAfterEnter"
-          @before-leave="onBeforeLeave"
-          @after-leave="onAfterLeave"
-      >
-        <div class="overlay" v-if="show">
-          <button style="display:none;" class="backPage" @click="close">
-            <el-icon>
-              <Back/>
-            </el-icon>
-          </button>
-          <card-detail :detail="detail" @afterDoComment="afterDoComment" ref="overlay"/>
-        </div>
-      </transition>
+        name="fade"
+        @before-enter="onBeforeEnter"
+        @after-enter="onAfterEnter"
+        @before-leave="onBeforeLeave"
+        @after-leave="onAfterLeave"
+    >
+      <div class="overlay" v-if="show">
+        <button style="display:none;" class="backPage" @click="close">
+          <el-icon>
+            <Back/>
+          </el-icon>
+        </button>
+        <card-detail :detail="detail" @afterDoComment="afterDoComment" ref="overlay"/>
+      </div>
+    </transition>
     </div>
+
     <div v-else-if="radio === '收藏'">
       <div v-if="userCollect.length === 0">
         <el-empty description="现在还没有收藏..."/>
       </div>
-      <div v-infinite-scroll="load" :infinite-scroll-disabled="disabled" :infinite-scroll-delay="200"
-           :infinite-scroll-distance="100"
-           v-else>
-        <home-card :card_columns="card_columns_collect" ref="overlay" @show-detail="showMessage"></home-card>
+      <div v-else  class="scroll-container">
+        <home-card 
+          :list="userCollect"
+          :loading="loading"
+          :has-more="hasMore"
+          @show-detail="showMessage"
+          @load-more="load"
+        ></home-card>
       </div>
       <transition
-          name="fade"
-          @before-enter="onBeforeEnter"
-          @after-enter="onAfterEnter"
-          @before-leave="onBeforeLeave"
-          @after-leave="onAfterLeave"
-      >
-        <div class="overlay" v-if="show">
-          <button style="display:none;" class="backPage" @click="close">
-            <el-icon>
-              <Back/>
-            </el-icon>
-          </button>
-          <card-detail :detail="detail" @afterDoComment="afterDoComment" ref="overlay"/>
-        </div>
-      </transition>
+        name="fade"
+        @before-enter="onBeforeEnter"
+        @after-enter="onAfterEnter"
+        @before-leave="onBeforeLeave"
+        @after-leave="onAfterLeave"
+    >
+      <div class="overlay" v-if="show">
+        <button style="display:none;" class="backPage" @click="close">
+          <el-icon>
+            <Back/>
+          </el-icon>
+        </button>
+        <card-detail :detail="detail" @afterDoComment="afterDoComment" ref="overlay"/>
+      </div>
+    </transition>
     </div>
+
     <div v-else-if="radio === '点赞'">
       <div v-if="userFavorite.length === 0">
         <el-empty description="现在还没有点赞..."/>
       </div>
-      <div v-infinite-scroll="load" :infinite-scroll-disabled="disabled" :infinite-scroll-delay="200"
-           :infinite-scroll-distance="100"
-           v-else>
-        <home-card :card_columns="card_columns_like" @show-detail="showMessage"></home-card>
+      <div v-else class="scroll-container">
+        <home-card 
+          :list="userFavorite"
+          :loading="loading"
+          :has-more="hasMore"
+          @show-detail="showMessage"
+          @load-more="load"
+        ></home-card>
       </div>
       <transition
-          name="fade"
-          @before-enter="onBeforeEnter"
-          @after-enter="onAfterEnter"
-          @before-leave="onBeforeLeave"
-          @after-leave="onAfterLeave"
-      >
-        <div class="overlay" v-if="show">
-          <button style="display:none;" class="backPage" @click="close">
-            <el-icon>
-              <Back/>
-            </el-icon>
-          </button>
-          <card-detail :detail="detail" @afterDoComment="afterDoComment" ref="overlay"/>
-        </div>
-      </transition>
+        name="fade"
+        @before-enter="onBeforeEnter"
+        @after-enter="onAfterEnter"
+        @before-leave="onBeforeLeave"
+        @after-leave="onAfterLeave"
+    >
+      <div class="overlay" v-if="show">
+        <button style="display:none;" class="backPage" @click="close">
+          <el-icon>
+            <Back/>
+          </el-icon>
+        </button>
+        <card-detail :detail="detail" @afterDoComment="afterDoComment" ref="overlay"/>
+      </div>
+    </transition>
     </div>
 
     <!-- 添加更新个人信息的弹窗 -->
@@ -518,7 +516,6 @@ const doUpdate = async () => {
         center 
         draggable
         class="update-info-dialog"
-        style="width: 30%;"
       >
         <div class="fileUpload">
           <el-upload v-model:file-list="fileList"
@@ -577,61 +574,21 @@ const doUpdate = async () => {
   align-items: center;
   justify-content: center;
 }
-@media screen and (max-width: 768px) {
- .userInfo {
-   padding: 20px;
- }
 
- .el-row {
-   flex-direction: column;
-   align-items: center;
- }
 
- .el-col {
-   width: 100% !important;
-   margin-bottom: 20px;
-   display: flex;
-   flex-direction: column;
-   align-items: center;
-   text-align: center;
- }
+@media screen and (max-width: 375px) {
+  .el-col:nth-child(2) {
+    font-size: 10;
+  }
 
- .el-avatar {
-   width: 15vw;
-   height: 15vw;
- }
+  .el-col:last-child {
+    font-size: 100;
+  }
 
- .tagArea {
-   display: flex;
-   justify-content: center;
-   gap: 10px;
-   flex-wrap: wrap;
-   margin-top: 10px;
- }
+  p {
+    font-size: 10;
 
- .update-btn,
- .focusOn {
-   margin-top: 10px;
-   width: 120px;
- }
-}
-
-.focusOn {
-  align-items: center;
-  justify-content: center;
-  width: 6vw;
-  height: 2.5vw;
-  font-weight: 600;
-  font-size: 100%;
-  min-width: 60px;
-  min-height: 25px;
-  cursor: pointer;
-  background-color: red;
-  border-radius: 1000px;
-  color: #fff;
-  border-color: transparent;
-  margin-top: 1rem;
-  transition: all 0.3s;
+  }
 }
 
 .focusOn:hover {
@@ -649,7 +606,28 @@ const doUpdate = async () => {
   background-color: #f56c6c;
   color: #fff;
 }
-
+.update-btn,.focusOn {
+  align-items: center;
+  justify-content: center;
+  width: 6vw;
+  height: 2.5vw;
+  font-weight: 600;
+  min-width: 60px;
+  min-height: 25px;
+  cursor: pointer;
+  background-color: red;
+  border-radius: 1000px;
+  color: #fff;
+  border-color: transparent;
+  margin-top: 1rem;
+  transition: all 0.3s;
+}
+.update-btn,.focusOn {
+  font-size: 80%;
+}
+.update-btn:hover {
+  background-color: #fd5656;
+}
 .tagArea {
   width: 40vw;
 }
@@ -658,20 +636,17 @@ const doUpdate = async () => {
   margin-right: 1vw;
 }
 
-.checkBox {
-  margin-top: 2vh;
-  position: relative;
-}
 
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
   height: 100%;
   z-index: 9999;
 }
-
+:deep(.el-dialog) {
+  width: 30vw;
+}
 .backPage {
   position: fixed;
   top: 3%;
@@ -705,46 +680,6 @@ const doUpdate = async () => {
   animation: scale-up-center 0.5s linear both reverse;
 }
 
-.update-btn {
-  align-items: center;
-  justify-content: center;
-  width: 6vw;
-  height: 2.5vw;
-  font-weight: 600;
-  font-size: 1.1vw;
-  min-width: 60px;
-  min-height: 25px;
-  cursor: pointer;
-  background-color: red;
-  border-radius: 1000px;
-  color: #fff;
-  border-color: transparent;
-  margin-top: 1rem;
-  transition: all 0.3s;
-}
-@media screen and (max-width: 768px) {
- .update-btn {
-  font-size: 80%;
-
- }
-}
-.update-btn:hover {
-  background-color: #fd5656;
-}
-
-:deep(.el-dialog__title) {
-  width: 100%;
-  text-align: center;
-  display: block;
-}
-
-/* 上传区域容器样式 */
-.upload-container {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
 
 .upload-area {
   width: 200px;
@@ -756,7 +691,7 @@ const doUpdate = async () => {
   justify-content: center;
   cursor: pointer;
   transition: border-color 0.3s;
-  margin: 0 auto; /* 确保水平居中 */
+  margin: 0 auto;
 }
 
 .upload-area:hover {
@@ -784,13 +719,341 @@ const doUpdate = async () => {
   font-size: 14px;
 }
 
-/* 确保文件上传区域居中 */
+.update-info-dialog {
+  max-width: 100vw;
+}
+
 .fileUpload {
-  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
+  padding: 1rem;
 }
 
+.upload-container {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.upload-area {
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 200px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.3s;
+  margin: 0 auto;
+}
+
+.upload-box {
+  width: 50%;
+  aspect-ratio: 1;
+  border: 2px dashed #dcdfe6;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.upload-icon {
+  font-size: clamp(16px, 3vw, 24px);
+  color: #909399;
+}
+
+.upload-text {
+  color: #909399;
+  font-size: clamp(12px, 2.5vw, 14px);
+}
+
+.form-container {
+  width: 100%;
+  max-width: 500px;
+}
+
+.form-item {
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.input-field {
+  width: 100%;
+}
+
+.dialog-footer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.card {
+  width: 100%;
+  border-radius: 0.8rem;
+  background-color: white;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.image {
+  width: 100%;
+  border-radius: 0.8rem 0.8rem 0 0;
+  display: block;
+  transition: opacity 0.2s;
+}
+
+.image:hover {
+  opacity: 0.7;
+}
+
+.card-content {
+  padding: 10px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.username {
+  font-weight: 400;
+  font-size: 0.875rem;
+  color: #333;
+}
+
+.card-title-container {
+  margin-bottom: 1vh;
+  height: auto;
+  max-height: 48px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.card-title {
+  font-weight: 800;
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin: 0;
+  line-height: 1.2;
+}
+
+:deep(.lazy__img[lazy=loading]) {
+  padding: 5em 0;
+  width: 48px;
+}
+
+:deep(.lazy__img[lazy=loaded]) {
+  width: 100%;
+}
+
+:deep(.lazy__img[lazy=error]) {
+  padding: 5em 0;
+  width: 48px;
+}
+
+.scroll-container {
+  height: calc(100vh - 250px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 20px;
+}
+
+.scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  background-color: #dcdfe6;
+  border-radius: 3px;
+}
+
+.scroll-container::-webkit-scrollbar-track {
+  background-color: #f5f7fa;
+}
+
+
+@media screen and (max-width: 768px) {
+  .userInfo {
+    padding: 1vh;
+    width: 100%;
+    height: 12vh;
+  }
+
+  .el-row {
+    height: auto;
+    display: flex;
+    flex-direction: row;  /* 确保子项横向排列 */
+    align-items: center;  /* 垂直居中 */
+    width: 100%;
+  }
+
+  /* 头像列样式 */
+  .el-col:first-child {
+    width: 20% !important;
+    position: relative;
+  }
+
+  /* 用户信息列样式 */
+  .el-col:nth-child(2) {
+    width: 60% !important;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* 头像大小调整 */
+  .el-avatar {
+    width: 15vw !important;
+    height: 15vw !important;
+  }
+
+  /* 用户名和签名 */
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.2; /* 调整行高，使内容更紧凑 */
+  }
+
+  p {
+    margin: 4px 0;
+    font-size: 2.8vw;
+  }
+
+  /* 标签区域样式 */
+  .tagArea {
+    position: absolute;
+    left: 0;
+    top: 100%; 
+    transform: translateY(10px);
+    width: calc(100% + 2vw);
+    display: flex;
+    gap: 3vw;
+    margin-top: 1vh;
+  }
+
+  /* 操作按钮区域样式 */
+  .el-col:last-child {
+    
+    width: 20% !important;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start; /* 顶部对齐 */
+  }
+
+  /* 标签样式 */
+  .ml-2 {
+    margin: 0;
+    font-size: 12px;
+    padding: 0 8px;
+  }
+
+  /* 更新资料按钮样式 */
+  .update-btn, .focusOn {
+    margin: -10px;
+    font-size: 12px;
+    height: auto;
+  }
+
+  /* 关注按钮样式 */
+  .focusOn {
+    margin: -10px;
+    font-size: 12px;
+    height: auto;
+    min-width: auto;
+  }
+
+
+ .checkBox {
+  margin-top: 6vw;
+ }
+ .scroll-container {
+    height: calc(100vh - 200px); /* 移动端可以适当调整高度 */
+    padding: 0 10px;
+  }
+  .upload-area {
+    max-width: 150px;
+  }
+
+  .upload-box {
+    width: 60%;
+  }
+
+  .form-item {
+    margin: 0.5rem 0;
+  }
+
+  :deep(.el-dialog) {
+    width: 95vw;
+  }
+
+
+  .dialog-footer button {
+    min-width: 80px;
+    padding: 8px 16px;
+  }
+  .radio {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .el-radio-group {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 8px;
+    margin-bottom: 16px;
+  }
+
+  .el-radio-button {
+    flex: 1;
+    text-align: center;
+  }
+
+  .el-radio-button__inner {
+    width: 100%;
+    padding: 12px 0;
+    border-radius: 0;
+  }
+}
+
+:deep(.el-upload-list--picture-card) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+:deep(.el-upload-list--picture-card .el-upload-list__item) {
+  width: 100%;
+  aspect-ratio: 1;
+  margin: 0;
+}
+
+:deep(.el-upload--picture-card) {
+  width: 100%;
+  aspect-ratio: 1;
+  margin: 0;
+}
+
+
+
+/* Mobile-specific styles */
+@media screen and (max-width: 768px) {
+  .el-radio-button__inner {
+    padding: 8px 0;
+    font-size: 14px;
+  }
+}
 
 </style>

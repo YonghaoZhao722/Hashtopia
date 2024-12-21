@@ -6,16 +6,28 @@ const props = defineProps({
   list: {
     type: Array,
     required: true
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  },
+  hasMore: {
+    type: Boolean,
+    default: true
   }
 })
 
-const emit = defineEmits(['show-detail'])
+const emit = defineEmits(['show-detail', 'load-more'])
+
 const details = (id, event) => {
   const target = event.target;
   const rect = target.getBoundingClientRect();
   emit('show-detail', id, rect.left, rect.top)
 }
 
+const handleLoadMore = () => {
+  emit('load-more')
+}
 </script>
 
 <template>
@@ -46,14 +58,29 @@ const details = (id, event) => {
                 <RouterLink :to="`/user/index/${item.user.id}`">
                   <el-avatar :src="item.user.avatar" size="small" />
                 </RouterLink>
-                <div class="username">{{ item.user.username }}</div>
+                <RouterLink :to="`/user/index/${item.user.id}`">
+                 <div class="username">{{ item.user.username }}</div>
+                </RouterLink>
               </el-row>
             </div>
           </div>
         </div>
       </template>
     </Waterfall>
-    <div class="bottom-space"></div>
+
+    <!-- 加载更多区域 -->
+    <div class="load-more-container">
+      <el-button
+        v-if="hasMore"
+        :loading="loading"
+        @click="handleLoadMore"
+        class="load-more-btn"
+      >
+        {{ loading ? 'Loading...' : 'Load More' }}
+      </el-button>
+      <div v-else class="no-more">No More Posts...</div>
+      <div class="bottom-space"></div>
+    </div>
   </div>
 </template>
 
@@ -71,6 +98,10 @@ const details = (id, event) => {
   background-color: white;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+a {
+  text-decoration: none;
 }
 
 .image {
@@ -111,16 +142,53 @@ const details = (id, event) => {
 }
 
 .card-title {
-  font-weight: 800;
+  font-weight: 400;
   font-size: 0.875rem;
   cursor: pointer;
   margin: 0;
   line-height: 1.2;
 }
 
-.bottom-space {
-  height: 10vh; 
-  width: 100%;
+/* 加载更多按钮样式 */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  padding: 10px;
+  
+}
+
+.load-more-btn {
+  align-items: center;
+  justify-content: center;
+  width: 4.8vw;
+  height: 2vw;
+  font-weight: 600;
+  font-size: 0.8vw;
+  
+  min-width: 60px;
+  min-height: 25px;
+  cursor: pointer;
+  background-color: red;
+  border-radius: 1000px;
+  color: #fff;
+  border-color: transparent;
+  margin-top: 1rem;
+  transition: all 0.3s;
+}
+@media screen and (max-width: 768px) {
+ .load-more-btn {
+  font-size: 1.2vh;
+ }
+}
+.load-more-btn:hover {
+  background-color: #fd5656;
+}
+
+.no-more {
+  color: #909399;
+  font-size: 14px;
+  text-align: center;
 }
 
 :deep(.lazy__img[lazy=loading]) {
@@ -136,4 +204,9 @@ const details = (id, event) => {
   padding: 5em 0;
   width: 48px;
 }
+
+.bottom-space {
+  height: 16vh; 
+}
+
 </style>

@@ -77,7 +77,7 @@ const changeShow = () => {
           </div>
           <h5 class="Username menuText" :class="{ open2: isMenuOpen }" v-show="isMenuOpen">
             {{ userStore.userInfo.username }}</h5>
-          <p class="menuText" :class="{ open2: isMenuOpen }"><i class="iconfont icon-youjiantou"></i></p>
+          <p class="menuText" :class="{ open2: isMenuOpen }"></p>
         </RouterLink>
       </div>
       <div class="themeBar">
@@ -152,7 +152,7 @@ const changeShow = () => {
 }
 
 .menu {
-  max-width: 300px;
+  max-width: 240px;
   position: absolute;
   width: 60px;
   height: 96vh;
@@ -307,6 +307,7 @@ const changeShow = () => {
   opacity: 1;
   transform: translateX(0);
   text-align: center;
+  
 }
 
 .menu .menuBreak {
@@ -334,6 +335,8 @@ const changeShow = () => {
 
 .menu .themeBar div {
   width: 100%;
+  max-width: 225px;
+
   height: 100%;
   display: flex;
   align-items: center;
@@ -357,12 +360,12 @@ const changeShow = () => {
 .menu .themeBar div button:hover {
   background-color: #d5d0d0;
   color: #f5131e;
-
 }
 
 .menu .menuUser {
   position: relative;
   width: 100%;
+  max-width: 240px;
   height: 10%;
 }
 
@@ -405,12 +408,7 @@ const changeShow = () => {
 
 }
 
-.icon-youjiantou{
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-}
+
 @keyframes animArrow {
   0% {
     transform: translateX(0);

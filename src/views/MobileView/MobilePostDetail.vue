@@ -20,7 +20,7 @@ const props = defineProps({
 
 // Same state management and methods as desktop version
 const comments = ref([])
-const emit = defineEmits(['afterDoComment'])
+const emit = defineEmits(['needBackPage', 'closeOverlay', 'mounted', 'afterDoComment']);
 const userStore = useUserStore()
 const content = ref('')
 const to = ref(0)
@@ -111,19 +111,27 @@ onMounted(() => load())
       </div>
       <div class="center-section">
         <div class="user-info">
-          <el-avatar :src="detail.user.avatar" :size="36" />
-          <span class="username">{{ detail.user.username }}</span>
+          <router-link :to="`/user/index/${detail.user.id}`" class="user-link">
+            <el-avatar :src="detail.user.avatar" :size="36" />
+            <span class="username">{{ detail.user.username }}</span>
+          </router-link>
+          <el-button 
+            class="follow-button" 
+            :class="{ 'is-following': checkFollow(detail.user.id) }"
+            @click="checkFollow(detail.user.id) ? cancelFocusOn(detail.user.id) : doFocusOn(detail.user.id)"
+            v-if="userStore.userInfo.id !== detail.user.id">
+            {{ checkFollow(detail.user.id) ? '已关注' : '关注' }}
+          </el-button>
         </div>
       </div>
       <div class="right-section">
-        <el-icon :size="24"><More /></el-icon>
       </div>
     </div>
 
     <!-- Main Content -->
     <div class="mobile-content">
       <!-- Image Carousel -->
-      <el-carousel height="300px" indicator-position="inside">
+      <el-carousel height="40vh">
         <el-carousel-item v-for="item in detail.imgs" :key="item">
           <img :src="item" class="carousel-image" />
         </el-carousel-item>
@@ -204,22 +212,78 @@ onMounted(() => load())
 }
 
 .mobile-header {
-  padding: 12px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 8px;
+}
+
+.user-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
 }
 
 .username {
   font-size: 16px;
   font-weight: 500;
+  color: #333;
+}
+
+.follow-button {
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: #ff4757;
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.follow-button.is-following {
+  background-color: #f1f1f1;
+  color: #666;
+}
+
+.follow-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.follow-button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .mobile-header {
+    padding: 8px 12px;
+  }
+  
+  .follow-button {
+    padding: 4px 12px;
+    font-size: 13px;
+  }
+  
+  .username {
+    font-size: 14px;
+  }
 }
 
 .mobile-content {
@@ -230,7 +294,8 @@ onMounted(() => load())
 .carousel-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background-color: #f5f5f5;
 }
 
 .post-info {

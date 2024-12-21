@@ -7,7 +7,6 @@ import {controlDetail} from "@/stores/controlDetail";
 const route = useRoute();
 const Detail = controlDetail();
 const detail = Detail.detail
-// 评论内容
 const content = Detail.content
 const getDetail = () => Detail.getDetail(route.params.id)
 const afterDoComment = (comment) => Detail.afterDoComment(comment)
