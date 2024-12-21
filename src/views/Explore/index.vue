@@ -7,7 +7,6 @@ import {queryPost} from "@/apis/main";
 import {useRoute} from "vue-router";
 import {controlDetail} from "@/stores/controlDetail";
 import {onClickOutside} from '@vueuse/core';
-import {resizeWaterFall, waterFallInit, waterFallMore} from "@/utils/waterFall";
 
 const query = useRoute().query.query
 const Details = controlDetail()
@@ -16,17 +15,13 @@ const Details = controlDetail()
 const cards = ref([]);
 const disabled = ref(true); // 初始禁用滚动加载
 
-const columns = ref(0)
-const card_columns = ref({})
-const arrHeight = ref([])
-
 // 主页获取帖子
 const doQuery = async (offset) => {
   const res = await queryPost({offset, query});
   cards.value = res.info;
-  waterFallInit(columns, card_columns, arrHeight, cards)
   disabled.value = false; // 启用滚动加载
 };
+
 // 无限滚动
 const load = async () => {
   disabled.value = true;
@@ -37,17 +32,15 @@ const load = async () => {
     disabled.value = true; // 没有更多数据，禁用滚动加载
   } else {
     cards.value = [...cards.value, ...more];
-    waterFallMore(arrHeight, card_columns, more)
     disabled.value = false;
   }
 };
-// 主页卡片结束////////////////////////////////////////////////////////////////
 
 // 卡片详情 //////////////////////////////////////////////////////////////////
 const detail = Details.detail;
 const show = ref(false);
-const overlayX = ref(0); // 覆盖层的水平位置
-const overlayY = ref(0); // 覆盖层的垂直位置
+const overlayX = ref(0);
+const overlayY = ref(0);
 const overlay = ref(null)
 
 const getDetails = async (id) => Details.getDetail(id)
@@ -58,12 +51,14 @@ const showMessage = async (id, left, top) => {
   await getDetails(id);
   show.value = true;
 };
+
 const afterDoComment = (comment) => Details.afterDoComment(comment)
 const close = () => {
   window.history.pushState({}, "", "/");
   show.value = false;
   document.title = '欢迎来到Dlock!'
 };
+
 onClickOutside(overlay, () => {
   window.history.pushState({}, "", "/");
   show.value = false;
@@ -94,6 +89,7 @@ const onAfterEnter = (el) => {
   const button = el.querySelector('.backPage')
   button.style.display = ''
 }
+
 const onBeforeLeave = (el) => {
   const button = el.querySelector('.backPage')
   button.style.display = 'none'
@@ -107,11 +103,8 @@ const onAfterLeave = () => {
   }
 }
 
-// 卡片详情结束 //////////////////////////////////////////////////////////////////
-
 onMounted(async () => {
   await doQuery(0);
-  resizeWaterFall(columns, card_columns, arrHeight, cards)
 });
 </script>
 
@@ -121,7 +114,7 @@ onMounted(async () => {
   </div>
   <div v-else>
     <div v-infinite-scroll="load" :infinite-scroll-disabled="disabled" :infinite-scroll-distance="200">
-      <home-card :card_columns="card_columns" @show-detail="showMessage" ref="homeCardRef"></home-card>
+      <home-card :list="cards" @show-detail="showMessage" ref="homeCardRef"></home-card>
     </div>
     <transition
         name="fade"
@@ -141,7 +134,6 @@ onMounted(async () => {
     </transition>
   </div>
 </template>
-
 
 <style scoped>
 .Empty {
@@ -172,15 +164,14 @@ onMounted(async () => {
 }
 
 @media screen and (max-width: 768px) {
- .backPage {
-   top: 2%;
-   left: 2%;
-   width: 4vh;
-   height: 4vh;
-   border-radius: 35px;
- }
+  .backPage {
+    top: 2%;
+    left: 2%;
+    width: 4vh;
+    height: 4vh;
+    border-radius: 35px;
+  }
 }
-
 
 .fade-enter-active {
   animation: scale-up-center 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
@@ -189,5 +180,4 @@ onMounted(async () => {
 .fade-leave-active {
   animation: scale-up-center 0.3s ease-out both reverse;
 }
-
 </style>

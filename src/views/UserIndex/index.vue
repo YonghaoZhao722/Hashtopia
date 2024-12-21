@@ -550,7 +550,7 @@ const doUpdate = async () => {
     <div class="fileUpload">
       <el-form :model="form" ref="formRef" :rules="rules" label-position="top">
         <el-form-item prop="username" label="昵称" label-width="7vw" style="margin: 2vw;font-size: 100%;">
-          <el-input v-model="form.username" maxlength="6"
+          <el-input v-model="form.username" maxlength="32"
                     show-word-limit class="my"/>
         </el-form-item>
         <el-form-item prop="signature" label="个性签名" label-width="7vw" style="margin: 2vw;">

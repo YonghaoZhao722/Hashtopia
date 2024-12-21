@@ -1,5 +1,6 @@
 <script setup>
 import {ref} from "vue";
+
 import {ElMessage} from 'element-plus'
 import 'element-plus/theme-chalk/el-message.css'
 import {User, Lock, ChatLineSquare} from "@element-plus/icons-vue";
@@ -144,7 +145,7 @@ const toggleForm = () => {
   <div class="login">
     <div class="box">
       <div class="leftArea">
-        <div class="title" style="text-align: center">Dlock</div>
+        <div class="title" style="text-align: center">Hashtopia</div>
         <img src="/icon.jpg" class="image" alt="">
       </div>
       <div class="rightArea" v-if="showWhich">
@@ -179,7 +180,7 @@ const toggleForm = () => {
               <el-input class="my" v-model="formRegister.email" placeholder="请输入注册邮箱" :prefix-icon="ChatLineSquare"/>
             </el-form-item>
             <el-form-item prop="username" class="inputArea">
-              <el-input class="my" v-model="formRegister.username" placeholder="请输入用户名" :prefix-icon="User" maxlength="6" show-word-limit/>
+              <el-input class="my" v-model="formRegister.username" placeholder="请输入用户名" :prefix-icon="User" maxlength="32" show-word-limit/>
             </el-form-item>
             <el-form-item prop="password" class="inputArea">
               <el-input class="my" v-model="formRegister.password" placeholder="请输入密码" :prefix-icon="Lock" show-password/>

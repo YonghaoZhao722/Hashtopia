@@ -1,80 +1,61 @@
 <script setup>
-import {ref} from "vue";
+import { LazyImg, Waterfall } from 'vue-waterfall-plugin-next'
+import 'vue-waterfall-plugin-next/dist/style.css'
 
-defineProps({
-  card_columns: {
+const props = defineProps({
+  list: {
     type: Array,
-    default: () => [] // Properly define default as empty array
+    required: true
   }
 })
+
 const emit = defineEmits(['show-detail'])
-const details = (id) => {
+const details = (id, event) => {
   const target = event.target;
-  const left = target.x;
-  const top = target.y;
-  emit('show-detail', id, left, top)
+  const rect = target.getBoundingClientRect();
+  emit('show-detail', id, rect.left, rect.top)
 }
-const ok = ref(false)
-const handleLoad = (card) => {
-  card.load = true
-}
+
 </script>
 
 <template>
   <div class="page-container">
-    <div class="columns-container">
-      <div class="column" v-for="col in card_columns" :key="col.id">
-        <section v-for="card in col" :key="card.id">
-          <div v-show="card.load" class="card">
-            <a :href="`/explore/${card.id}`" @click.prevent="details(card.id)">
-              <img
-                  :src="card.img"
-                  class="image"
-                  @load="handleLoad(card)"
-                  alt=""
-              />
-            </a>
-            <div class="card-content">
-              <div class="card-title-container">
-                <span class="card-title" @click="details(card.id)">{{ card.title }}</span>
-              </div>
-              <div class="bottom">
-                <el-row class="user-info">
-                  <RouterLink :to="`/user/index/${card.user.id}`">
-                    <el-avatar
-                        :src="card.user.avatar" 
-                        size="small"
-                    />
-                  </RouterLink>
-                  <div class="username">{{ card.user.username }}</div>
-                </el-row>
-              </div>
+    <Waterfall 
+      :list="list" 
+      :width="250"
+      :gutter="20"
+      imgSelector="img"
+      :breakpoints="{
+        1200: { rowPerView: 4 },
+        900: { rowPerView: 3 },
+        600: { rowPerView: 2 },
+        400: { rowPerView: 1 }
+      }"
+    >
+      <template #default="{ item, url, index }">
+        <div class="card">
+          <a :href="`/explore/${item.id}`" @click.prevent="(e) => details(item.id, e)">
+            <LazyImg :url="item.img" class="image" />
+          </a>
+          <div class="card-content">
+            <div class="card-title-container">
+              <span class="card-title" @click="(e) => details(item.id, e)">{{ item.title }}</span>
+            </div>
+            <div class="bottom">
+              <el-row class="user-info">
+                <RouterLink :to="`/user/index/${item.user.id}`">
+                  <el-avatar :src="item.user.avatar" size="small" />
+                </RouterLink>
+                <div class="username">{{ item.user.username }}</div>
+              </el-row>
             </div>
           </div>
-          <div v-if="!card.load" class="card loading">
-            <div class="image" :style="{height: card.img_info.height / (card.img_info.width / 250) + 'px'}">
-            </div>
-            <div class="card-content">
-              <div class="card-title-container">
-                <span class="card-title" @click="details(card.id)">{{ card.title }}</span>
-              </div>
-              <div class="bottom">
-                <el-row class="user-info">
-                  <RouterLink :to="`/user/index/${card.user.id}`">
-                    <div class="avatar"></div>
-                  </RouterLink>
-                  <div class="username">{{ card.user.username }}</div>
-                </el-row>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-    </div>
+        </div>
+      </template>
+    </Waterfall>
     <div class="bottom-space"></div>
   </div>
 </template>
-
 
 <style scoped>
 .page-container {
@@ -84,30 +65,8 @@ const handleLoad = (card) => {
   position: relative;
 }
 
-.columns-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  padding: 20px;
-  justify-content: center;
-  width: 100%;
-  min-height: min-content;
-}
-
-.column {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-section {
-  width: 250px;
-  break-inside: avoid;
-  margin: 20px 20px 20px 20px;
-}
-
 .card {
-  width: 250px;
+  width: 100%;
   border-radius: 0.8rem;
   background-color: white;
   overflow: hidden;
@@ -142,45 +101,39 @@ section {
 }
 
 .card-title-container {
-  margin-bottom: 10px;
-  height: 24px;
+  margin-bottom: 1vh;
+  height: auto;
+  max-height: 48px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .card-title {
-  font-size: 1rem;
+  font-weight: 800;
+  font-size: 0.875rem;
   cursor: pointer;
-}
-
-.loading .image,
-.loading .avatar {
-  background: gainsboro linear-gradient(
-    100deg,
-    rgba(255, 255, 255, 0) 40%,
-    rgba(255, 255, 255, .5) 50%,
-    rgba(255, 255, 255, 0) 60%
-  );
-  background-size: 200% 100%;
-  background-position-x: 180%;
-  animation: 1s loading ease-in-out infinite;
-}
-
-.loading .avatar {
-  border-radius: 50%;
-  height: 24px;
-  width: 24px;
-}
-
-@keyframes loading {
-  to {
-    background-position-x: -20%;
-  }
+  margin: 0;
+  line-height: 1.2;
 }
 
 .bottom-space {
-  height: 6vh;  /* 底部预留 60px 的滚动空间 */
+  height: 10vh; 
   width: 100%;
+}
+
+:deep(.lazy__img[lazy=loading]) {
+  padding: 5em 0;
+  width: 48px;
+}
+
+:deep(.lazy__img[lazy=loaded]) {
+  width: 100%;
+}
+
+:deep(.lazy__img[lazy=error]) {
+  padding: 5em 0;
+  width: 48px;
 }
 </style>

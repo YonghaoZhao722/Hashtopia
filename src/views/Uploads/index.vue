@@ -4,8 +4,6 @@ import {useUserStore} from "@/stores/user.js";
 import {computed, onBeforeMount, ref} from "vue";
 import {Back, Plus, Upload} from '@element-plus/icons-vue'
 import {ElMessage} from "element-plus";
-import CardDetail from "@/components/cardDetail.vue";
-import {getCurrentTime} from "@/utils/getTime";
 import {uploadPost} from "@/apis/main";
 
 const router = useRouter()
@@ -141,7 +139,7 @@ const doUploads = async () => {
     // 2. 上传图片
     upload.value.submit()
     
-    ElMessage({type: 'success', message: '发布成功，3秒后跳转到主页'})
+    ElMessage({type: 'success', message: 'Post Successfully'})
     setTimeout(() => {
       router.replace('/')
     }, 1000)
@@ -174,8 +172,6 @@ const handleChange = (file, fileList) => {
     return
   }
 
-  // 验证通过后继续
-  ElMessage.success('Upload Successfully')
 }
 
 
@@ -218,7 +214,7 @@ const handleChange = (file, fileList) => {
         <div class="title-input">
           <el-input
               v-model="title"
-              maxlength="20"
+              maxlength="64"
               placeholder="填写标题会有更多赞哦~"
               show-word-limit
               type="text"

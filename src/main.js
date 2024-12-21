@@ -10,6 +10,7 @@ import headNav from '@/components/headNav.vue'
 import homeCard from '@/components/homeCard.vue'
 import cardDetail from '@/components/cardDetail.vue'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import 'vue-waterfall-plugin-next/dist/style.css'
 
 const app = createApp(App)
 const pinia = createPinia()
