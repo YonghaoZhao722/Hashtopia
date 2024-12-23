@@ -4,22 +4,16 @@ import {Promotion, Expand, Close, Tools, HelpFilled} from "@element-plus/icons-v
 import {useUserStore} from "@/stores/user";
 import Login from '@/views/Login/index.vue'
 import {ElMessage} from "element-plus";
-import {genFileId} from 'element-plus'
-import {updateUserInfo} from "@/apis/main";
-import router from "@/router";
 
 const userStore = useUserStore()
-// 控制菜单样式
 const isMenuOpen = ref(false)
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
 }
-// 登出
 const confirm = async () => {
   const res = await userStore.userLogout()
   ElMessage({type: 'success', message: res.info})
 }
-// 显示登录界面
 const show = ref(false)
 const changeShow = () => {
   show.value = !show.value;
@@ -44,7 +38,7 @@ const changeShow = () => {
       <li class="menuItem">
           <RouterLink to="/" class="menuOption">
             <i class="iconfont icon-shouye"></i>
-            <h5 class="menuText" :class="{ open2: isMenuOpen }">主页</h5>
+            <h5 class="menuText" :class="{ open2: isMenuOpen }">Home</h5>
           </RouterLink>
       </li>
       <li class="menuBreak">
@@ -55,7 +49,7 @@ const changeShow = () => {
             <el-icon size="x-large">
               <Promotion/>
             </el-icon>
-            <h5 class="menuText" :class="{ open2: isMenuOpen }">发布</h5>
+            <h5 class="menuText" :class="{ open2: isMenuOpen }">Post</h5>
           </RouterLink>
       </li>
       <li class="menuItem" v-if="userStore.userInfo.id">
@@ -64,7 +58,7 @@ const changeShow = () => {
               <el-icon size="x-large">
                 <HelpFilled/>
               </el-icon>
-              <h5 class="menuText" :class="{ open2: isMenuOpen }">个人帖子管理</h5>
+              <h5 class="menuText" :class="{ open2: isMenuOpen }">Post Control</h5>
             </div>
           </RouterLink>
       </li>
@@ -82,8 +76,8 @@ const changeShow = () => {
       </div>
       <div class="themeBar">
           <div>
-            <el-popconfirm @confirm="confirm" title="确认退出吗?" confirm-button-text="确认"
-                           cancel-button-text="取消">
+            <el-popconfirm @confirm="confirm" title="Are you sure you want to exit?" confirm-button-text="Yes"
+                           cancel-button-text="No">
               <template #reference>
                 <button type="button" @click=""><i class="iconfont icon-tuichu"></i></button>
               </template>
@@ -94,7 +88,7 @@ const changeShow = () => {
     <div v-else>
         <div class="themeBar">
           <div>
-            <button title="登录" type="button" @click="changeShow">
+            <button title="Login" type="button" @click="changeShow">
               <el-icon size="x-large">
                 <Expand/>
               </el-icon>
@@ -128,17 +122,18 @@ const changeShow = () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* 设置透明度的背景色 */
-  z-index: 9999; /* 设置一个较大的z-index值，确保图层位于其他内容之上 */
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
 }
 
 .close {
-  border: 0;
   position: absolute;
-  left: 70%;
-  top: 18%;
-  background-color: #fff;
-  z-index: 1000; /* 设置一个较大的z-index值，确保图层位于其他内容之上 */
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: transparent;
+  border: none;
+  color: rgb(0, 0, 0);
 }
 
 * {

@@ -1,11 +1,10 @@
 <script setup>
-import { ChatRound, Edit } from "@element-plus/icons-vue";
-import { onMounted, ref } from "vue";
-import { doComment, doFocus, unFollow, controlUserCollectOrLike, getComment, loadReplies } from "@/apis/main";
-import { ElMessage } from "element-plus";
-import { useUserStore } from "@/stores/user";
-import { getCurrentTime } from "@/utils/getTime";
-import router from "@/router";
+import {ChatRound, Edit} from "@element-plus/icons-vue";
+import {onMounted, ref} from "vue";
+import {doComment, doFocus, unFollow, controlUserCollectOrLike, getComment, loadReplies} from "@/apis/main";
+import {ElMessage} from "element-plus";
+import {useUserStore} from "@/stores/user";
+import {getCurrentTime} from "@/utils/getTime";
 
 const props = defineProps({
   detail: {
@@ -17,45 +16,34 @@ const props = defineProps({
     default: false
   }
 })
-
-// Same state management and methods as desktop version
 const comments = ref([])
-const emit = defineEmits(['needBackPage', 'closeOverlay', 'mounted', 'afterDoComment']);
+const emit = defineEmits(['afterDoComment'])
 const userStore = useUserStore()
-const content = ref('')
-const to = ref(0)
-const commentInput = ref(null)
-const disabled = ref(true)
 
-// Reuse existing methods
 const doFocusOn = async (id) => {
   if (userStore.userInfo.id === id) {
-    ElMessage({type: 'warning', message: '不能对自己进行关注操作'})
+    ElMessage({type: 'warning', message: 'Cannot follow yourself'})
     return
   }
   const res = await doFocus({id})
   userStore.extendUserInfo(1, id)
   ElMessage({type: 'success', message: res.info})
 }
-
 const cancelFocusOn = async (id) => {
   const res = await unFollow({id})
   userStore.removeFocus(1, id)
   ElMessage({type: 'success', message: res.info})
 }
-
 const checkFollow = (id) => {
   return userStore.userFocus.includes(id)
 }
-
 const checkCollect = (id) => {
   return userStore.userCollect.includes(id)
 }
-
 const checkFavorite = (id) => {
   return userStore.userFavorite.includes(id)
 }
-
+//Change the like and favorite status of a post
 const doSomething = async (type, detail) => {
   const post_id = detail.id
   if (type === 'like') {
@@ -64,26 +52,71 @@ const doSomething = async (type, detail) => {
     if (operator) {
       userStore.removeFocus(2, post_id)
       detail.likeCount--;
+      ElMessage({type: 'success', message: res.info})
     } else {
       userStore.extendUserInfo(2, post_id)
       detail.likeCount++;
+      ElMessage({type: 'success', message: res.info})
     }
-    ElMessage({type: 'success', message: res.info})
   } else if (type === 'collect') {
     const operator = checkCollect(post_id)
     const res = await controlUserCollectOrLike({post_id, operator, type})
     if (operator) {
       detail.collectCount--;
       userStore.removeFocus(3, post_id)
+      ElMessage({type: 'success', message: res.info})
     } else {
       detail.collectCount++;
       userStore.extendUserInfo(3, post_id)
+      ElMessage({type: 'success', message: res.info})
     }
-    ElMessage({type: 'success', message: res.info})
   }
 }
+//////////////////////////////////////////////////////////////////
 
-// Load comments
+const content = ref('')
+const to = ref(0)
+const commentInput = ref(null)
+const sendComment = async (post, to) => {
+  const info = ref([{
+    id: 0,
+    user: userStore.userInfo,
+    content: content.value,
+    createTime: getCurrentTime(),
+    replyCount: 0,
+    replies: []
+  }])
+  if (to === 0 || to === '0') {
+    const data = {
+      post_id: post.id,
+      content: content.value,
+    }
+    const res = await doComment({data})
+    ElMessage({type: 'success', message: res.info})
+    info.value[0].id = res.id
+    console.log(res.id, info.value)
+    comments.value = [...comments.value, ...info.value]
+  } else {
+    const data = {
+      post_id: post.id,
+      content: content.value,
+      parent_comment_id: to
+    }
+    const res = await doComment({data})
+    ElMessage({type: 'success', message: res.info})
+    const comment = comments.value.find(item => item.id === to);
+    comment.replies = [...comment.replies, ...info.value]
+    clearReply()
+  }
+  emit('afterDoComment')
+  content.value = ''
+}
+
+const clearReply = () => {
+  commentInput.value.input.placeholder = `Say something...`
+  to.value = 0
+}
+const disabled = ref(true)
 const load = async () => {
   disabled.value = true
   const offset = comments.value.length
@@ -97,10 +130,10 @@ const load = async () => {
     disabled.value = true
   }
 }
-const handleBack = () => {
-  router.back();
-};
-onMounted(() => load())
+
+onMounted(async () => {
+  await load();
+});
 </script>
 
 <template>
@@ -120,7 +153,7 @@ onMounted(() => load())
             :class="{ 'is-following': checkFollow(detail.user.id) }"
             @click="checkFollow(detail.user.id) ? cancelFocusOn(detail.user.id) : doFocusOn(detail.user.id)"
             v-if="userStore.userInfo.id !== detail.user.id">
-            {{ checkFollow(detail.user.id) ? '已关注' : '关注' }}
+            {{ checkFollow(detail.user.id) ? 'Followed' : 'Follow' }}
           </el-button>
         </div>
       </div>
@@ -174,7 +207,7 @@ onMounted(() => load())
 
       <!-- Comments Section -->
       <div class="comments-section" v-infinite-scroll="load" :infinite-scroll-disabled="disabled">
-        <div class="comment-count">评论 {{ detail.commentCount }}</div>
+        <div class="comment-count">Comment {{ detail.commentCount }}</div>
         <div v-for="comment in comments" :key="comment.id" class="comment-item">
           <el-avatar :src="comment.user.avatar" :size="30" />
           <div class="comment-content">
@@ -182,7 +215,7 @@ onMounted(() => load())
             <div class="comment-text">{{ comment.content }}</div>
             <div class="comment-meta">
               <span class="time">{{ comment.createTime }}</span>
-              <el-button link size="small" @click="$refs.commentInput.focus()">回复</el-button>
+              <el-button link size="small" @click="$refs.commentInput.focus()">Reply</el-button>
             </div>
           </div>
         </div>
@@ -193,7 +226,7 @@ onMounted(() => load())
     <div class="comment-input-container">
       <el-input
         v-model="content"
-        placeholder="说点什么..."
+        placeholder="Say something..."
         ref="commentInput"
         :prefix-icon="Edit"
         @keyup.enter="sendComment(detail, to)"

@@ -7,11 +7,8 @@ import {User, Lock, ChatLineSquare} from "@element-plus/icons-vue";
 import {useUserStore} from "@/stores/user";
 import {useRouter} from "vue-router";
 
-// 定义路由
 const emit = defineEmits(['changeShow']);
 const router = useRouter()
-// 账户加密码校验
-// 准备表单对象
 const formLogin = ref({
   email: '',
   password: '',
@@ -25,36 +22,34 @@ const formRegister = ref({
   agree: false
 })
 
-// 准备规则对象
 const rulesRegister = {
   email: [
-    {required: true, message: '邮箱不能为空', trigger: 'blur'},
+    {required: true, message: 'Email address cannot be empty', trigger: 'blur'},
     {
       validator: (rule, value, callback) => {
-        var emailRegExp = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(\.[a-zA-Z0-9_-])+/;
-        var emailRegExp1 = /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/;
-        if ((!emailRegExp.test(value) && value !== '') || (!emailRegExp1.test(value) && value !== '')) {
-          callback(new Error('请输入有效邮箱格式！'));
-        } else {
-          callback();
-        }
+          var emailRegExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+          if (value && !emailRegExp.test(value)) {
+              callback(new Error('Please enter a valid email format!'));
+          } else {
+              callback();
+          }
       }
     }
   ],
   username: [
-    {required: true, message: '用户名不能为空！', trigger: 'blur'}
+    {required: true, message: 'Username cannot be empty!', trigger: 'blur'}
   ],
   password: [
-    {required: true, message: '密码不能为空', trigger: 'blur'},
-    {min: 6, max: 14, message: '密码不符合要求', trigger: 'blur'}
+    {required: true, message: 'Password cannot be empty!', trigger: 'blur'},
+    {min: 6, max: 14, message: 'Password does not meet requirements', trigger: 'blur'}
   ],
   retryPwd: [
-    {required: true, message: '密码不能为空', trigger: 'blur'},
-    {min: 6, max: 14, message: '密码不符合要求', trigger: 'blur'},
+    {required: true, message: 'Confirm password cannot be empty!', trigger: 'blur'},
+    {min: 6, max: 14, message: 'Comfirm password does not meet requirements', trigger: 'blur'},
     {
       validator: (rule, value, callback) => {
         if (value !== formRegister.value.password) {
-          callback(new Error('两次密码不一致！'));
+          callback(new Error('The two passwords do not match!'));
         } else {
           callback();
         }
@@ -64,11 +59,10 @@ const rulesRegister = {
   agree: [
     {
       validator: (rule, value, callback) => {
-        // 自定义校验逻辑
         if (value) {
           callback()
         } else {
-          callback(new Error('请勾选协议'))
+          callback(new Error('Please check the agreement'))
         }
       }
     }
@@ -76,22 +70,21 @@ const rulesRegister = {
 }
 const rulesLogin = {
   email: [
-    {required: true, message: '邮箱不能为空', trigger: 'blur'},
+    {required: true, message: 'Email address cannot be empty', trigger: 'blur'},
     {
       validator: (rule, value, callback) => {
-        var emailRegExp = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(\.[a-zA-Z0-9_-])+/;
-        var emailRegExp1 = /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/;
-        if ((!emailRegExp.test(value) && value !== '') || (!emailRegExp1.test(value) && value !== '')) {
-          callback(new Error('请输入有效邮箱格式！'));
-        } else {
-          callback();
-        }
+          var emailRegExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+          if (value && !emailRegExp.test(value)) {
+              callback(new Error('Please enter a valid email format!'));
+          } else {
+              callback();
+          }
       }
     }
   ],
   password: [
-    {required: true, message: '密码不能为空', trigger: 'blur'},
-    {min: 6, max: 14, message: '密码不符合要求', trigger: 'blur'}
+    {required: true, message: 'Password cannot be empty!', trigger: 'blur'},
+    {min: 6, max: 14, message: 'Password does not meet requirements', trigger: 'blur'}
   ],
   agree: [
     {
@@ -100,28 +93,25 @@ const rulesLogin = {
         if (value) {
           callback()
         } else {
-          callback(new Error('请勾选协议'))
+          callback(new Error('Please read the terms and conditions'))
         }
       }
     }
   ]
 }
 
-// 获取form实例校验
 const formLoginRef = ref(null)
 const formRegisterRef = ref(null)
 
-// 准备用户
 const userStore = useUserStore();
 const doLogin = () => {
   const {email, password} = formLogin.value
   formLoginRef.value.validate(async (valid) => {
     if (valid) {
-      // 提示用户
       await userStore.getUserInfo({email, password})
       emit('changeShow')
       await router.replace(`/user/index/${userStore.userInfo.id}`)
-      ElMessage({type: 'success', message: '登陆成功'})
+      ElMessage({type: 'success', message: 'Login Successfully'})
     }
   })
 }
@@ -130,7 +120,7 @@ const doRegister = () => {
   formRegisterRef.value.validate(async (valid) => {
     if (valid) {
       await userStore.userRegister({email, username, password})
-      ElMessage({type: 'success', message: '注册成功'})
+      ElMessage({type: 'success', message: 'Register Successfully'})
       toggleForm()
     }
   })
@@ -153,54 +143,55 @@ const toggleForm = () => {
 
         <!-- Right Area - Login Form -->
         <div class="right-area" v-if="showWhich">
-          <div class="title">登录</div>
+          <div class="title">Login</div>
           <div class="form">
             <el-form ref="formLoginRef" :model="formLogin" :rules="rulesLogin" label-position="right" label-width="0" status-icon>
               <el-form-item prop="email" class="input-item">
-                <el-input v-model="formLogin.email" placeholder="请输入邮箱号" :prefix-icon="User"/>
+                <el-input v-model="formLogin.email" placeholder="Please enter your email address" :prefix-icon="User"/>
               </el-form-item>
               <el-form-item prop="password" class="input-item">
-                <el-input v-model="formLogin.password" placeholder="请输入密码" :prefix-icon="Lock" show-password/>
+                <el-input v-model="formLogin.password" placeholder="Please enter your password" :prefix-icon="Lock" show-password/>
               </el-form-item>
               <el-form-item prop="agree" label-width="22px" class="input-item">
-                <el-checkbox size="large" v-model="formLogin.agree">
-                  我已同意隐私条款和服务条款
+                <el-checkbox class="checkbox" size="large" v-model="formLogin.agree">
+                  I agree to the Privacy Policy and Terms of Service
                 </el-checkbox>
               </el-form-item>
-              <el-button size="large" class="submit-btn" @click="doLogin">点击登录</el-button>
+              <el-button size="large" class="submit-btn" @click="doLogin">Login</el-button>
             </el-form>
           </div>
-          <el-divider content-position="center">或</el-divider>
-          <el-button size="large" class="submit-btn" @click="toggleForm()">新用户注册</el-button>
+          <el-divider content-position="center">Or</el-divider>
+          <el-button size="large" class="submit-btn" @click="toggleForm()">Register</el-button>
         </div>
 
         <!-- Right Area - Register Form -->
         <div class="right-area" v-if="!showWhich">
-          <div class="title">注册</div>
+          <div class="title">Register</div>
           <div class="form">
             <el-form ref="formRegisterRef" :model="formRegister" :rules="rulesRegister" label-position="right" label-width="0" status-icon>
               <el-form-item prop="email" class="input-item">
-                <el-input v-model="formRegister.email" placeholder="请输入注册邮箱" :prefix-icon="ChatLineSquare"/>
+                <el-input v-model="formRegister.email" placeholder="Please enter your email address" :prefix-icon="ChatLineSquare"/>
               </el-form-item>
               <el-form-item prop="username" class="input-item">
-                <el-input v-model="formRegister.username" placeholder="请输入用户名" :prefix-icon="User" maxlength="32" show-word-limit/>
+                <el-input v-model="formRegister.username" placeholder="Please enter your username" :prefix-icon="User" maxlength="32" show-word-limit/>
               </el-form-item>
               <el-form-item prop="password" class="input-item">
-                <el-input v-model="formRegister.password" placeholder="请输入密码" :prefix-icon="Lock" show-password/>
+                <el-input v-model="formRegister.password" placeholder="Please enter your password" :prefix-icon="Lock" show-password/>
               </el-form-item>
               <el-form-item prop="retryPwd" class="input-item">
-                <el-input v-model="formRegister.retryPwd" placeholder="请确认输入密码" :prefix-icon="Lock" show-password/>
+                <el-input v-model="formRegister.retryPwd" placeholder="Please confirm your password" :prefix-icon="Lock" show-password/>
               </el-form-item>
               <el-form-item prop="agree" label-width="22px" class="input-item">
                 <el-checkbox size="large" v-model="formRegister.agree">
-                  我已同意隐私条款和服务条款
+                  I agree to the Privacy Policy and Terms of Service
+
                 </el-checkbox>
               </el-form-item>
-              <el-button size="large" class="submit-btn" @click="doRegister">点击注册</el-button>
+              <el-button size="large" class="submit-btn" @click="doRegister">Register</el-button>
             </el-form>
           </div>
-          <el-divider content-position="center">或</el-divider>
-          <el-button size="large" class="submit-btn" @click="toggleForm()">立即登录</el-button>
+          <el-divider content-position="center">Or</el-divider>
+          <el-button size="large" class="submit-btn" @click="toggleForm()">Login</el-button>
         </div>
       </div>
     </div>
@@ -287,6 +278,29 @@ const toggleForm = () => {
 
 .submit-btn:hover {
   opacity: 1;
+}
+
+:deep(.el-checkbox) {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  padding: 0 1rem;
+}
+
+:deep(.el-checkbox__label) {
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;  
+  width: 100%;       
+  max-width: 280px;   
+  word-wrap: break-word;
+}
+
+.input-item {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
 }
 
 /* Responsive Design */

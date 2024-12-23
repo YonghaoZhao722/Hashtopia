@@ -5,7 +5,6 @@ import {postDetail} from "@/apis/main";
 export const controlDetail = () => {
     const detail = ref({})
     const comments = ref([])
-    // 评论内容
     const content = ref('')
     const userStore = useUserStore()
 

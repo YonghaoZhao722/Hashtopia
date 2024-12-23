@@ -37,3 +37,7 @@ body {
     border-radius: 999px !important;
     color: #000;
 }
+
+#content{
+    overflow: hidden;
+}

@@ -1,11 +1,11 @@
 <script setup>
 import {useRoute} from "vue-router";
-import {onMounted, ref, computed} from "vue";
+import {onMounted, ref, computed, nextTick} from "vue";
 import HomeCard from "@/components/homeCard.vue";
 import CardDetail from "@/components/cardDetail.vue";
 import {Back,Plus } from "@element-plus/icons-vue";
 import { genFileId } from 'element-plus'
-import {doFocus, queryUserIndex, queryUserPost, unFollow, queryUserFocus, updateUserInfo} from "@/apis/main";
+import {doFocus, queryUserIndex, queryUserPost, unFollow, queryUserFocus, updateUserInfo, changePassword} from "@/apis/main";
 import {controlDetail} from "@/stores/controlDetail";
 import {onClickOutside} from "@vueuse/core";
 import {useUserStore} from "@/stores/user";
@@ -13,11 +13,12 @@ import {ElMessage} from "element-plus";
 import { LazyImg, Waterfall } from 'vue-waterfall-plugin-next'
 import 'vue-waterfall-plugin-next/dist/style.css'
 import '../../styles/common.css'
+
 const route = useRoute()
 const Details = controlDetail()
 const userStore = useUserStore()
-
-// 加载用户信息 //////////////////////////////////////////////////////////////
+const baseURL = import.meta.env.VITE_API_BASE_URL
+// Load user information //////////////////////////////////////////////////////////////
 const userInfo = ref({})
 const getUserInfo = async () => {
   const id = route.params.id
@@ -25,44 +26,46 @@ const getUserInfo = async () => {
   userInfo.value = res.data
   document.title = res.data.user.username
 }
+
 const checkFollow = (id) => {
-  // 确保安全地访问
+  // Ensure safe access
   if (!userStore.userFocus.value) {
     return false
   }
   return userStore.userFocus.value.includes(id)
 }
-// 修改关注操作函数
+
+// Modify follow operation function
 const doFocusOn = async (id) => {
   if (userStore.userInfo.id === id) {
-    ElMessage({type: 'warning', message: '不能对自己进行关注操作'})
+    ElMessage({type: 'warning', message: 'Cannot follow yourself'})
     return
   }
   
   try {
     const res = await doFocus({id})
-    // 确保初始化数组
+    // Ensure array initialization
     if (!userStore.userFocus.value) {
       userStore.userFocus.value = []
     }
-    // 更新状态
+    // Update status
     userStore.extendUserInfo(1, id)
     userInfo.value.user.fans += 1
     
-    // 重新获取用户关注列表以确保状态同步
+    // Refresh user follow list to ensure state synchronization
     const focusResult = await queryUserFocus()
     userStore.userFocus.value = focusResult.follow
     
     ElMessage({type: 'success', message: res.info})
   } catch(error) {
-    ElMessage({type: 'error', message: '关注失败'})
+    ElMessage({type: 'warning', message: 'Follow failed'})
   }
 }
 
-// 加载用户信息结束 ////////////////////////////////////////////////////////////
+// End of loading user information ////////////////////////////////////////////////////////////
 
-// 主页切换标签 //////////////////////////////////////////////////////////////
-const radio = ref('帖子')
+// Homepage tab switching //////////////////////////////////////////////////////////////
+const radio = ref('Posts')
 const userPost = ref([])
 const userCollect = ref([])
 const userFavorite = ref([])
@@ -70,30 +73,29 @@ const userFavorite = ref([])
 const loading = ref(false)
 const hasMore = ref(true)
 
-
 const Toggle = async () => {
   loading.value = true
-  hasMore.value = true // 重置hasMore状态
+  hasMore.value = true // Reset hasMore status
   const user_id = route.params.id
   const offset = 0
   const types = radio.value
   
   try {
-    if (radio.value === '帖子' && userPost.value.length === 0) {
+    if (radio.value === 'Posts' && userPost.value.length === 0) {
       const post = await queryUserPost({user_id, types, offset})
       userPost.value = post.info
       hasMore.value = post.has_more
-    } else if (radio.value === '收藏' && userCollect.value.length === 0) {
+    } else if (radio.value === 'Collections' && userCollect.value.length === 0) {
       const post = await queryUserPost({user_id, types, offset})
       userCollect.value = post.info
       hasMore.value = post.has_more
-    } else if (radio.value === '点赞' && userFavorite.value.length === 0) {
+    } else if (radio.value === 'Likes' && userFavorite.value.length === 0) {
       const post = await queryUserPost({user_id, types, offset})
       userFavorite.value = post.info
       hasMore.value = post.has_more
     }
   } catch (error) {
-    console.error('加载失败:', error)
+    console.error('Loading failed:', error)
   } finally {
     loading.value = false
   }
@@ -106,8 +108,8 @@ const load = async () => {
   try {
     const user_id = userInfo.value.user.id
     const types = radio.value
-    let currentList = radio.value === '帖子' ? userPost : 
-                     radio.value === '收藏' ? userCollect : userFavorite
+    let currentList = radio.value === 'Posts' ? userPost : 
+                     radio.value === 'Collections' ? userCollect : userFavorite
     
     const offset = currentList.value.length
     const result = await queryUserPost({user_id, types, offset})
@@ -117,41 +119,73 @@ const load = async () => {
     }
     hasMore.value = result.has_more
   } catch (error) {
-    console.error('加载更多失败:', error)
+    console.error('Load more failed:', error)
   } finally {
     loading.value = false
   }
 }
 
-// 主页切换标签结束 ///////////////////////////////////////////////////////////
+// End of homepage tab switching ///////////////////////////////////////////////////////////
 
-// 卡片详情页的内容 //////////////////////////////////////////////////////////
+// Card detail page content //////////////////////////////////////////////////////////
 const detail = Details.detail
-const overlayX = ref(0); // 覆盖层的水平位置
-const overlayY = ref(0); // 覆盖层的垂直位置
+const overlayX = ref(0)
+const overlayY = ref(0)
 const overlay = ref(null)
 const show = ref(false)
 
 const getDetails = async (id) => Details.getDetail(id)
+
+const handleOverlayClose = () => {
+  window.history.pushState({}, "", "/");
+  show.value = false;
+  document.title = 'Welcome to Hashtopia!';
+  
+  const backButton = document.querySelector('.backPage');
+  if (backButton) {
+    backButton.style.display = 'none';
+  }
+  
+  const navigationElements = document.querySelectorAll('.menu,.el-header');
+  navigationElements.forEach(el => {
+    el.style.display = '';
+  });
+};
+
+const addBackPage = () => {
+  nextTick(() => {
+    const backButton = document.querySelector('.backPage');
+    if (backButton) {
+      backButton.style.display = 'block';
+    }
+  });
+};
+
 const showMessage = async (id, left, top) => {
+  sessionStorage.setItem('cardDetailSource', window.location.pathname);
+  
   window.history.pushState({}, "", `/explore/${id}`);
   overlayX.value = left;
   overlayY.value = top;
   await getDetails(id);
   show.value = true;
+  await nextTick();
 };
+
 const afterDoComment = (comment) => Details.afterDoComment(comment)
 const close = () => {
-  window.history.pushState({}, '', `/user/index/${userInfo.value.user.id}`);
+  window.history.pushState({}, '', `/user/index/${userInfo.value.user.id}`)
   document.title = userInfo.value.user.username
   show.value = false
 }
+
 onClickOutside(overlay, () => {
-  window.history.pushState({}, "", `/user/index/${userInfo.value.user.id}`);
+  window.history.pushState({}, "", `/user/index/${userInfo.value.user.id}`)
   document.title = userInfo.value.user.username
-  show.value = false;
-});
-let style = null;
+  show.value = false
+})
+
+let style = null
 const onBeforeEnter = () => {
   style = document.createElement('style')
   style.innerHTML =
@@ -164,7 +198,7 @@ const onBeforeEnter = () => {
             transform: scale(1);
           }
        }`
-  document.head.appendChild(style);
+  document.head.appendChild(style)
 }
 
 const onAfterEnter = (el) => {
@@ -172,6 +206,7 @@ const onAfterEnter = (el) => {
   const button = el.querySelector('.backPage')
   button.style.display = ''
 }
+
 const onBeforeLeave = (el) => {
   const button = el.querySelector('.backPage')
   button.style.display = 'none'
@@ -180,61 +215,68 @@ const onBeforeLeave = (el) => {
 
 const onAfterLeave = () => {
   if (style) {
-    document.head.removeChild(style);
-    style = null;
+    document.head.removeChild(style)
+    style = null
   }
 }
 
 onMounted(async () => {
   await getUserInfo()
-  // 确保 userFocus 被初始化
+  // Ensure userFocus is initialized
   if (!userStore.userFocus.value) {
     userStore.userFocus.value = []
-    // 获取关注列表
+    // Get follow list
     try {
       const focusResult = await queryUserFocus()
       if (focusResult && focusResult.follow) {
         userStore.userFocus.value = focusResult.follow
       }
     } catch (error) {
-      console.error('获取关注列表失败:', error)
+      console.error('Failed to get follow list:', error)
     }
   }
   await Toggle()
+  const currentPath = window.location.pathname;
+  if (currentPath.includes('/explore/')) {
+    const postId = currentPath.split('/').pop();
+    if (postId) {
+      await getDetails(postId);
+      show.value = true;
+      await nextTick();
+    }
+  }
 })
 
-// 添加状态控制
+// Add state control
 const hoverButton = ref(false)
 
-// 修改关注状态的按钮文本
+// Modify follow status button text
 const buttonText = computed(() => {
   if (!userStore.userFocus.value || !checkFollow(userInfo.value?.user?.id)) {
-    return '关注'
+    return 'Follow'
   }
-  return hoverButton.value ? '取消关注' : '已关注'
+  return hoverButton.value ? 'Unfollow' : 'Following'
 })
 
-
-
-// 添加取消关注函数
+// Add unfollow function
 const cancelFocus = async (id) => {
   try {
-    const res = await unFollow({id})  // 修改为正确的函数名
-    // 更新状态
+    const res = await unFollow({id})
+    // Update status
     userStore.removeFocus(1, id)
     userInfo.value.user.fans -= 1
     
-    // 重新获取用户关注列表以确保状态同步
+    // Refresh user follow list to ensure state synchronization
     const focusResult = await queryUserFocus()
     userStore.userFocus.value = focusResult.follow
     
     ElMessage({type: 'success', message: res.info})
   } catch(error) {
-    ElMessage({type: 'error', message: '取消关注失败'})
+    ElMessage({type: 'warning', message: 'Unfollow failed'})
   }
 }
 
-// 统一的关注操作处理
+// Unified follow operation handling
 const handleFocus = async (id) => {
   if(checkFollow(id)) {
     await cancelFocus(id)
@@ -243,7 +285,7 @@ const handleFocus = async (id) => {
   }
 }
 
-// 在 script setup 中添加
+// Add to script setup
 const isOwnProfile = computed(() => {
   return userStore.userInfo && userInfo.value?.user && userStore.userInfo.id === userInfo.value.user.id
 })
@@ -254,7 +296,10 @@ const avatar = ref('')
 const fileList = ref([])
 const form = ref({
   username: '',
-  signature: ''
+  signature: '',
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
 })
 
 const handleExceed = (files) => {
@@ -263,44 +308,56 @@ const handleExceed = (files) => {
   file.uid = genFileId()
   upload.value.handleStart(file)
 }
+
 const handleChange = (uploadFile) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
   const maxSize = 2
 
   if (!allowedTypes.includes(uploadFile.raw.type)) {
-    ElMessage.error('请上传正确的图片文件!')
+    ElMessage.error('Please upload a valid image file!')
     fileList.value = []
     return false
   } 
   
   if (uploadFile.raw.size / 1024 / 1024 > maxSize) {
-    ElMessage.error(`文件大小最多${maxSize}MB!`)
+    ElMessage.error(`File size cannot exceed ${maxSize}MB!`)
     fileList.value = []
     return false
   }
 
-  // 直接更新 fileList
+  // Directly update fileList
   fileList.value = [uploadFile]
   return true
 }
 
 const closeDialog = async () => {
-  dialogFormVisible.value = false;
+  dialogFormVisible.value = false
   await getUserInfo()
-  fileList.value = [];
+  fileList.value = []
+  form.value.oldPassword = ''
+  form.value.newPassword = ''
+  form.value.confirmPassword = ''
 }
 
 const onSuccess = async (response) => {
   avatar.value = response.filepath
-  // 刷新用户信息
+  // Update user store with new avatar
+  userStore.changeInfo({
+    ...userStore.userInfo,
+    avatar: response.filepath
+  })
+  // Refresh user information
   await getUserInfo()
+  // Force refresh all components that depend on userStore
+  await nextTick()
 }
+
 const onError = async (error) => {
   ElMessage({
     type: 'warning',
-    message: '头像上传失败'
+    message: 'Avatar upload failed'
   })
-  const userStore = useUserStore();
+  const userStore = useUserStore()
   await userStore.userLogout()
   await router.replace('/')
 }
@@ -310,61 +367,97 @@ const openDialog = () => {
   form.value.username = userStore.userInfo.username
   form.value.signature = userStore.userInfo.signature
 }
-// 表单验证规则
+
+const validatePassword = (rule, value, callback) => {
+  if (!value) {
+    callback()
+    return
+  }
+  if (value.length < 6) {
+    callback(new Error('Password must be at least 6 characters!'))
+    return
+  }
+  callback()
+}
+
+// 添加确认密码验证函数
+const validateConfirmPassword = (rule, value, callback) => {
+  if (!value) {
+    callback()
+    return
+  }
+  if (value !== form.value.newPassword) {
+    callback(new Error('Passwords do not match!'))
+    return
+  }
+  callback()
+}
+
+// Form validation rules
 const rules = {
   username: [
-    {required: true, message: '用户名不能为空！', trigger: 'blur'}
+    { required: true, message: 'Username cannot be empty!', trigger: 'blur' }
   ],
   signature: [
-    {required: true, message: '个性签名不能为空!', trigger: 'blur'}
+    { required: true, message: 'Signature cannot be empty!', trigger: 'blur' }
+  ],
+  oldPassword: [
+    { validator: validatePassword, trigger: 'blur' }
+  ],
+  newPassword: [
+    { validator: validatePassword, trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { validator: validateConfirmPassword, trigger: 'blur' }
   ]
 }
-// 表单对象
+
+
+
+
+// Form object
 const formRef = ref(null)
 const doUpdate = async () => {
-  const {username, signature} = form.value;
-  const isModified = username !== userStore.userInfo.username || signature !== userStore.userInfo.signature;
-  const isAvatarUploaded = fileList.value.length === 1;
+  const { username, signature, oldPassword, newPassword, confirmPassword } = form.value
+  const isModified = username !== userStore.userInfo.username || signature !== userStore.userInfo.signature
+  const isAvatarUploaded = fileList.value.length === 1
+  const isPasswordChanged = oldPassword && newPassword && confirmPassword
 
-  if (!isModified && !isAvatarUploaded) {
-    ElMessage({type: 'warning', message: '未作任何修改！'});
-    return;
+  if (!isModified && !isAvatarUploaded && !isPasswordChanged) {
+    ElMessage({type: 'warning', message: 'No changes made!'})
+    return
   }
 
   try {
-    if (isModified && !isAvatarUploaded) {
-      await updateUserInfo({username, signature});
-      avatar.value = userStore.userInfo.avatar;
-      userStore.changeInfo({username, signature, avatar});
-      ElMessage({type: 'success', message: '用户信息更新成功'});
-      dialogFormVisible.value = false;
-      await getUserInfo();
-      return;
+    if (isPasswordChanged) {
+      if (newPassword !== confirmPassword) {
+        ElMessage({type: 'error', message: 'Passwords do not match!'})
+        return
+      }
+      await changePassword({
+        oldPassword,
+        newPassword
+      })
+      ElMessage({type: 'success', message: 'Password updated successfully'})
     }
 
-    if (!isModified && isAvatarUploaded) {
-      await upload.value.submit();
-      userStore.changeInfo({username, signature, avatar});
-      ElMessage({type: 'success', message: '头像上传成功'});
-      dialogFormVisible.value = false;
-      await getUserInfo();
-      return;
+    if (isModified || isAvatarUploaded) {
+      if (isModified) {
+        await updateUserInfo({username, signature})
+      }
+      if (isAvatarUploaded) {
+        await upload.value.submit()
+      }
+      userStore.changeInfo({username, signature, avatar: avatar.value})
+      ElMessage({type: 'success', message: 'Profile updated successfully'})
     }
 
-    if (isModified && isAvatarUploaded) {
-      const res = await updateUserInfo({username, signature});
-      await upload.value.submit();
-      userStore.changeInfo({username, signature, avatar});
-      ElMessage({type: 'success', message: res.info});
-      dialogFormVisible.value = false;
-      await getUserInfo();
-    }
+    dialogFormVisible.value = false
+    await getUserInfo()
   } catch (error) {
-    ElMessage({type: 'error', message: '更新失败，请重试'});
+    ElMessage({type: 'error', message: error.response?.data?.error || 'Update failed, please try again'})
   }
-  
-};
-
+}
 </script>
 
 <template>
@@ -377,9 +470,9 @@ const doUpdate = async () => {
         <h2>{{ userInfo.user.username }}</h2>
         <p>{{ userInfo.user.signature }}</p>
         <div class="tagArea">
-          <el-tag class="ml-2" type="success" round>{{ userInfo.user.focusOn }} 关注</el-tag>
-          <el-tag class="ml-2" type="info" round>{{ userInfo.user.fans }} 粉丝</el-tag>
-          <el-tag class="ml-2" type="warning" round>{{ userInfo.user.postsCount }} 笔记数</el-tag>
+          <el-tag class="ml-2" type="success" round>{{ userInfo.user.focusOn }} Following</el-tag>
+          <el-tag class="ml-2" type="info" round>{{ userInfo.user.fans }} Followers</el-tag>
+          <el-tag class="ml-2" type="warning" round>{{ userInfo.user.postsCount }} Posts</el-tag>
         </div>
       </el-col>
       <el-col :span="5">
@@ -388,7 +481,7 @@ const doUpdate = async () => {
             type="primary" 
             class="update-btn"
             @click="openDialog">
-            更新资料
+            Update
           </el-button>
         </template>
         <button 
@@ -406,18 +499,18 @@ const doUpdate = async () => {
   <div class="checkBox" @change="Toggle" style="text-align: center">
     <template v-if="isOwnProfile">
       <el-radio-group v-model="radio"  size="large">
-        <el-radio-button class="radio" style="margin: 1vw;" label="帖子" name="post"/>
-        <el-radio-button class="radio" style="margin: 1vw;" label="收藏" name="collect"/>
-        <el-radio-button class="radio" style="margin: 1vw;" label="点赞" name="like"/>
+        <el-radio-button class="radio" style="margin: 1vw;" label="Posts" name="Post"/>
+        <el-radio-button class="radio" style="margin: 1vw;" label="Collections" name="Collections"/>
+        <el-radio-button class="radio" style="margin: 1vw;" label="Likes" name="Likes"/>
     </el-radio-group>
   </template>
   </div>
 
 
   <div class="radio" v-if="userInfo.user">
-    <div v-if="radio === '帖子'">
+    <div v-if="radio === 'Posts'">
       <div v-if="userPost.length === 0">
-        <el-empty description="现在还没有帖子..."/>
+        <el-empty description="No posts yet..."/>
       </div>
       <div v-else  class="scroll-container">
         <home-card 
@@ -435,20 +528,26 @@ const doUpdate = async () => {
         @before-leave="onBeforeLeave"
         @after-leave="onAfterLeave"
     >
-      <div class="overlay" v-if="show">
-        <button style="display:none;" class="backPage" @click="close">
+      <div class="overlay" v-if="show" @click.self="handleOverlayClose">
+        <button class="backPage" @click="handleOverlayClose">
           <el-icon>
             <Back/>
           </el-icon>
         </button>
-        <card-detail :detail="detail" @afterDoComment="afterDoComment" ref="overlay"/>
+        <card-detail 
+          :detail="detail" 
+          @afterDoComment="afterDoComment" 
+          @closeOverlay="handleOverlayClose" 
+          @needBackPage="addBackPage"
+          ref="overlay"
+        />
       </div>
     </transition>
     </div>
 
-    <div v-else-if="radio === '收藏'">
+    <div v-else-if="radio === 'Collections'">
       <div v-if="userCollect.length === 0">
-        <el-empty description="现在还没有收藏..."/>
+        <el-empty description="No collections yet..."/>
       </div>
       <div v-else  class="scroll-container">
         <home-card 
@@ -472,14 +571,20 @@ const doUpdate = async () => {
             <Back/>
           </el-icon>
         </button>
-        <card-detail :detail="detail" @afterDoComment="afterDoComment" ref="overlay"/>
+        <card-detail 
+          :detail="detail" 
+          @afterDoComment="afterDoComment"
+          @needBackPage="addBackPage"
+          @closeOverlay="handleOverlayClose"
+          ref="overlay"
+        />
       </div>
     </transition>
     </div>
 
-    <div v-else-if="radio === '点赞'">
+    <div v-else-if="radio === 'Likes'">
       <div v-if="userFavorite.length === 0">
-        <el-empty description="现在还没有点赞..."/>
+        <el-empty description="No likes yet..."/>
       </div>
       <div v-else class="scroll-container">
         <home-card 
@@ -497,18 +602,23 @@ const doUpdate = async () => {
         @before-leave="onBeforeLeave"
         @after-leave="onAfterLeave"
     >
-      <div class="overlay" v-if="show">
-        <button style="display:none;" class="backPage" @click="close">
+      <div class="overlay" v-if="show" @click.self="handleOverlayClose">
+        <button class="backPage" @click="handleOverlayClose">
           <el-icon>
             <Back/>
           </el-icon>
         </button>
-        <card-detail :detail="detail" @afterDoComment="afterDoComment" ref="overlay"/>
+        <card-detail 
+          :detail="detail" 
+          @afterDoComment="afterDoComment" 
+          @closeOverlay="handleOverlayClose" 
+          @needBackPage="addBackPage"
+          ref="overlay"
+        />
       </div>
     </transition>
     </div>
 
-    <!-- 添加更新个人信息的弹窗 -->
         <el-dialog 
         v-model="dialogFormVisible" 
         title="" 
@@ -546,20 +656,34 @@ const doUpdate = async () => {
     </div>
     <div class="fileUpload">
       <el-form :model="form" ref="formRef" :rules="rules" label-position="top">
-        <el-form-item prop="username" label="昵称" label-width="7vw" style="margin: 2vw;font-size: 100%;">
+        <el-form-item prop="username" label="Name" label-width="7vw" style="margin: 2vw;font-size: 100%;">
           <el-input v-model="form.username" maxlength="32"
                     show-word-limit class="my"/>
         </el-form-item>
-        <el-form-item prop="signature" label="个性签名" label-width="7vw" style="margin: 2vw;">
+        <el-form-item prop="signature" label="Bio" label-width="7vw" style="margin: 2vw;">
           <el-input v-model="form.signature" class="my"/>
         </el-form-item>
+
+        <el-divider content-position="center">Change Password</el-divider>
+        <el-form-item prop="oldPassword" label="Current Password" label-width="7vw" style="margin: 2vw;">
+          <el-input v-model="form.oldPassword" type="password" show-password class="my"/>
+        </el-form-item>
+        
+        <el-form-item prop="newPassword" label="New Password" label-width="7vw" style="margin: 2vw;">
+          <el-input v-model="form.newPassword" type="password" show-password class="my"/>
+        </el-form-item>
+        
+        <el-form-item prop="confirmPassword" label="Confirm Password" label-width="7vw" style="margin: 2vw;">
+          <el-input v-model="form.confirmPassword" type="password" show-password class="my"/>
+        </el-form-item>
+
       </el-form>
     </div>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="closeDialog" round>取消</el-button>
+        <el-button @click="closeDialog" round>Cancel</el-button>
         <el-button type="primary" @click="doUpdate" round>
-          确认
+          Confirm
         </el-button>
       </span>
     </template>
@@ -575,7 +699,12 @@ const doUpdate = async () => {
   justify-content: center;
 }
 
-
+h2 {
+  font-size: clamp(15px, 2vw, 24px);  /* 响应式字体大小 */
+  overflow: hidden;
+  text-overflow: ellipsis;  /* 超出部分显示省略号 */
+  white-space: nowrap;  /* 防止换行 */
+}
 @media screen and (max-width: 375px) {
   .el-col:nth-child(2) {
     font-size: 10;
@@ -585,9 +714,15 @@ const doUpdate = async () => {
     font-size: 100;
   }
 
-  p {
-    font-size: 10;
+  h2 {
+      font-size: 14px;  /* 固定更小的字体大小 */
+    }
 
+  .update-btn, .focusOn {
+    min-width: 60px;
+    min-height: 26px;
+    padding: 2px 8px;
+    font-size: 12px;
   }
 }
 
@@ -595,36 +730,39 @@ const doUpdate = async () => {
   background-color: #fd5656;
 }
 
-/* 已关注状态 */
 .focusOn.followed {
   background-color: #f4f4f5;
   color: #909399;
 }
 
-/* 已关注状态下的hover效果 */
 .focusOn.followed:hover {
   background-color: #f56c6c;
   color: #fff;
 }
-.update-btn,.focusOn {
+.update-btn, .focusOn {
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 6vw;
+  width: 8vw;
+  min-width: 80px;  /* 增加最小宽度 */
   height: 2.5vw;
+  min-height: 32px;  /* 增加最小高度 */
   font-weight: 600;
-  min-width: 60px;
-  min-height: 25px;
-  cursor: pointer;
+  font-size: clamp(14px, 1vw, 20px);  /* 使用 clamp 控制字体大小范围 */
+  line-height: 1;
+  padding: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   background-color: red;
   border-radius: 1000px;
   color: #fff;
   border-color: transparent;
   margin-top: 1rem;
+  margin-left: 1rem;
   transition: all 0.3s;
 }
-.update-btn,.focusOn {
-  font-size: 80%;
-}
+
 .update-btn:hover {
   background-color: #fd5656;
 }
@@ -636,48 +774,58 @@ const doUpdate = async () => {
   margin-right: 1vw;
 }
 
+:deep(.el-tag){
+  height: 2.5vh;
+}
 
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  background: white;
   z-index: 9999;
+  display: flex;
+  flex-direction: column;
 }
+
 :deep(.el-dialog) {
-  width: 30vw;
+  width: 35vw;
+  min-width: 420px;
 }
 .backPage {
-  position: fixed;
-  top: 3%;
-  left: 3%;
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  display: flex !important;
   justify-content: center;
   align-items: center;
-  width: 4vw;
-  height: 4vw;
-  max-width: 45px;
-  max-height: 45px;
-  border-radius: 40px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
   cursor: pointer;
-  transition: all .3s;
+  border: none;
+  z-index: 10000;
 }
 
-@media screen and (max-width: 768px) {
- .backPage {
-   top: 2%;
-   left: 2%;
-   width: 4vh;
-   height: 4vh;
-   border-radius: 35px;
- }
+.backPage .el-icon {
+  font-size: 20px;
+  color: #666;
 }
+
+.backPage:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
 
 .fade-enter-active {
-  animation: scale-up-center 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+  animation: scale-up-center 0.3s ease-out both;
 }
 
 .fade-leave-active {
-  animation: scale-up-center 0.5s linear both reverse;
+  animation: scale-up-center 0.3s ease-in both reverse;
 }
 
 
@@ -791,7 +939,7 @@ const doUpdate = async () => {
   display: flex;
   justify-content: center;
   gap: 1rem;
-  padding: 1rem 0;
+  padding-top: 0;
 }
 
 .card {
@@ -836,7 +984,6 @@ const doUpdate = async () => {
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
 }
 
 .card-title {
@@ -883,6 +1030,9 @@ const doUpdate = async () => {
 
 
 @media screen and (max-width: 768px) {
+  :deep(.el-main){
+    overflow: hidden;
+  }
   .userInfo {
     padding: 1vh;
     width: 100%;
@@ -892,18 +1042,16 @@ const doUpdate = async () => {
   .el-row {
     height: auto;
     display: flex;
-    flex-direction: row;  /* 确保子项横向排列 */
-    align-items: center;  /* 垂直居中 */
+    flex-direction: row;
+    align-items: center;
     width: 100%;
   }
 
-  /* 头像列样式 */
   .el-col:first-child {
     width: 20% !important;
     position: relative;
   }
 
-  /* 用户信息列样式 */
   .el-col:nth-child(2) {
     width: 60% !important;
     display: flex;
@@ -911,25 +1059,13 @@ const doUpdate = async () => {
     align-items: flex-start;
   }
 
-  /* 头像大小调整 */
   .el-avatar {
     width: 15vw !important;
     height: 15vw !important;
   }
 
-  /* 用户名和签名 */
-  h2 {
-    margin: 0;
-    font-size: 16px;
-    line-height: 1.2; /* 调整行高，使内容更紧凑 */
-  }
 
-  p {
-    margin: 4px 0;
-    font-size: 2.8vw;
-  }
 
-  /* 标签区域样式 */
   .tagArea {
     position: absolute;
     left: 0;
@@ -938,33 +1074,33 @@ const doUpdate = async () => {
     width: calc(100% + 2vw);
     display: flex;
     gap: 3vw;
-    margin-top: 1vh;
+    margin-top: 0.5vh;
   }
 
-  /* 操作按钮区域样式 */
   .el-col:last-child {
     
     width: 20% !important;
     display: flex;
     justify-content: flex-end;
-    align-items: flex-start; /* 顶部对齐 */
+    align-items: flex-start;
   }
 
-  /* 标签样式 */
+
   .ml-2 {
     margin: 0;
     font-size: 12px;
     padding: 0 8px;
   }
 
-  /* 更新资料按钮样式 */
   .update-btn, .focusOn {
+    width: 20vw;
+    max-width: 100px;
     margin: -10px;
-    font-size: 12px;
+    font-size: 110%;
     height: auto;
+    margin-left: 1rem;
   }
 
-  /* 关注按钮样式 */
   .focusOn {
     margin: -10px;
     font-size: 12px;
@@ -977,7 +1113,7 @@ const doUpdate = async () => {
   margin-top: 6vw;
  }
  .scroll-container {
-    height: calc(100vh - 200px); /* 移动端可以适当调整高度 */
+    height: calc(100vh - 200px);
     padding: 0 10px;
   }
   .upload-area {
@@ -993,7 +1129,7 @@ const doUpdate = async () => {
   }
 
   :deep(.el-dialog) {
-    width: 95vw;
+    width: 90vw;
   }
 
 
@@ -1010,6 +1146,7 @@ const doUpdate = async () => {
   .el-radio-group {
     display: flex;
     width: 100%;
+    height: 3vh;
     justify-content: space-between;
     margin-top: 8px;
     margin-bottom: 16px;
@@ -1020,10 +1157,30 @@ const doUpdate = async () => {
     text-align: center;
   }
 
-  .el-radio-button__inner {
+  :deep(.el-radio-button__inner) {
     width: 100%;
-    padding: 12px 0;
+    padding: 1vh 0;
     border-radius: 0;
+  }
+
+  .el-radio-button__inner {
+    padding: 8px 0;
+    font-size: 14px;
+  }
+
+  h2 {
+    font-size: clamp(14px, 4vw, 20px); 
+  }
+  
+  
+  p {
+    margin: 4px 0;
+    font-size: 2.8vw;
+  }
+ .backPage {
+    top: 12px;
+    left: 2%;
+    border-radius: 35px;
   }
 }
 
@@ -1046,14 +1203,7 @@ const doUpdate = async () => {
   margin: 0;
 }
 
-
-
-/* Mobile-specific styles */
-@media screen and (max-width: 768px) {
-  .el-radio-button__inner {
-    padding: 8px 0;
-    font-size: 14px;
-  }
+.el-divider {
+  text-align: center;
 }
-
 </style>

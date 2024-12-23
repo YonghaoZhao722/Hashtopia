@@ -2,6 +2,7 @@ import axios from "axios";
 import {useUserStore} from "@/stores/user";
 import router from '@/router'
 import { ElMessage } from 'element-plus'
+const baseURL = import.meta.env.VITE_API_BASE_URL
 
 const http = axios.create({
     baseURL: 'http://localhost:8000',
@@ -12,7 +13,6 @@ const http = axios.create({
     }
 })
 
-// axios请求拦截器
 http.interceptors.request.use(config => {
     const userStore = useUserStore();
     if (userStore.userInfo.token) {
@@ -21,15 +21,13 @@ http.interceptors.request.use(config => {
     return config
 }, e => Promise.reject(e))
 
-// axios响应式拦截器
 http.interceptors.response.use(res => res.data, e => {
-    // 确保 e.response 存在
     if (e.response) {
         switch (e.response.status) {
             case 401:
                 ElMessage({
                     type: 'warning',
-                    message: e.response.data.error || '未授权访问'
+                    message: e.response.data.error || 'Please Login'
                 })
                 const userStore = useUserStore();
                 userStore.userLogout()
@@ -38,7 +36,7 @@ http.interceptors.response.use(res => res.data, e => {
             case 403:
                 ElMessage({
                     type: 'warning',
-                    message: e.response.data.error || '禁止访问'
+                    message: e.response.data.error || 'Permission Denied'
                 })
                 router.replace('/login')
                 break;
@@ -48,20 +46,18 @@ http.interceptors.response.use(res => res.data, e => {
             default:
                 ElMessage({
                     type: 'error',
-                    message: e.response.data?.error || '服务器错误'
+                    message: e.response.data?.error || 'Server Error'
                 })
         }
     } else if (e.request) {
-        // 请求已经发出，但没有收到响应
         ElMessage({
             type: 'error',
-            message: '网络错误，请检查您的网络连接'
+            message: 'Network error, please check your network connection'
         })
     } else {
-        // 请求配置有误
         ElMessage({
             type: 'error',
-            message: '请求配置错误'
+            message: 'Request configuration error'
         })
     }
     return Promise.reject(e)

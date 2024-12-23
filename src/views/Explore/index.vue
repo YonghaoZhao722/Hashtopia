@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, ref, nextTick} from "vue";
+import {onMounted, ref, nextTick,watch} from "vue";
 import HomeCard from "@/components/homeCard.vue";
 import {Back} from "@element-plus/icons-vue";
 import CardDetail from "@/components/cardDetail.vue";
@@ -8,26 +8,24 @@ import {useRoute} from "vue-router";
 import {controlDetail} from "@/stores/controlDetail";
 import {onClickOutside} from '@vueuse/core';
 
-const query = useRoute().query.query
+const query = ref(useRoute().query.query || '')
 const Details = controlDetail()
 
-// 主页卡片 //////////////////////////////////////////////////////////////////
+// Card //////////////////////////////////////////////////////////////////
 const cards = ref([]);
-const loading = ref(false); // 加载状态
-const hasMore = ref(true); // 是否还有更多数据
+const loading = ref(false); 
+const hasMore = ref(true);
 
-// 主页获取帖子
 const doQuery = async (offset) => {
-  const res = await queryPost({
-    offset,
-    query
-  });
-  cards.value = res.info;
-  hasMore.value = res.has_more; // 使用后端返回的has_more标志
+ const res = await queryPost({
+   offset,
+   query: query.value
+ });
+ cards.value = res.info;
+ hasMore.value = res.has_more;
 };
 
 const pageSize = 10;
-// 加载更多
 const loadMore = async () => {
   if (loading.value || !hasMore.value) return;
   
@@ -36,7 +34,7 @@ const loadMore = async () => {
     const offset = cards.value.length;
     const res = await queryPost({
       offset,
-      query
+      query: query.value 
     });
     const more = res.info;
     
@@ -53,7 +51,12 @@ const loadMore = async () => {
   }
 };
 
-// 卡片详情 //////////////////////////////////////////////////////////////////
+watch(() => useRoute().query.query, async (newQuery) => {
+  query.value = newQuery || '';
+  await doQuery(0);
+}, { immediate: true });
+
+// Detail //////////////////////////////////////////////////////////////////
 const detail = Details.detail;
 const show = ref(false);
 const overlayX = ref(0);
@@ -62,78 +65,128 @@ const overlay = ref(null)
 
 const getDetails = async (id) => Details.getDetail(id)
 const showMessage = async (id, left, top) => {
+  console.log('showMessage called', { id, left, top }); // 添加日志
+  
+  sessionStorage.setItem('cardDetailSource', window.location.pathname);
   window.history.pushState({}, "", `/explore/${id}`);
+  
+  // 确保这里的值是正确的
   overlayX.value = left;
   overlayY.value = top;
+  
   await getDetails(id);
   show.value = true;
-  // 确保在显示后添加返回按钮
   await nextTick();
-  addBackPage();
 };
 
+const reopenDetail = async (postId) => {
+  // 获取当前卡片的位置信息
+  const card = document.querySelector(`[data-post-id="${postId}"]`);
+  if (card) {
+    const rect = card.getBoundingClientRect();
+    await showMessage(postId, rect.left, rect.top);
+  } else {
+    // 如果找不到卡片，使用默认位置
+    await showMessage(postId, window.innerWidth / 2, window.innerHeight / 2);
+  }
+};
 const afterDoComment = (comment) => Details.afterDoComment(comment);
 
 onClickOutside(overlay, () => {
   window.history.pushState({}, "", "/");
   show.value = false;
-  document.title = '欢迎来到Dlock!'
+  document.title = 'Welcome to Hashtopia'
 });
 
 let style = null;
-const onBeforeEnter = () => {
-  style = document.createElement('style')
-  style.innerHTML =
-      `@keyframes scale-up-center {
-          0% {
-            transform: scale(0.5);
-            transform-origin: ${overlayX.value}px ${overlayY.value}px;
-          }
-          10% {
-            transform: scale(0.5);
-          }
-          100% {
-            transform: scale(1);
-          }
-       }`
+const onBeforeEnter = (el) => {
+  // 获取点击的卡片元素
+  const card = document.querySelector(`[data-post-id="${detail.value.id}"]`);
+  if (!card) {
+    console.log('Card not found, using fallback animation');
+    // 如果找不到卡片，使用基础动画作为后备方案
+    style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes scale-up-center {
+        0% {
+          transform: translate(${overlayX.value}px, ${overlayY.value}px) scale(0.5);
+          transform-origin: 0 0;
+          opacity: 0.5;
+        }
+        100% {
+          transform: translate(0, 0) scale(1);
+          transform-origin: 0 0;
+          opacity: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return;
+  }
+
+  // 获取卡片和窗口的尺寸信息
+  const cardRect = card.getBoundingClientRect();
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+
+  // 计算缩放比例
+  const scaleX = cardRect.width / windowWidth;
+  const scaleY = cardRect.height / windowHeight;
+  const scale = Math.max(scaleX, scaleY); // 使用较大的缩放比例确保完整覆盖
+
+  // 计算位置偏移
+  const translateX = cardRect.left;
+  const translateY = cardRect.top;
+
+  style = document.createElement('style');
+  style.innerHTML = `
+    @keyframes scale-up-center {
+      0% {
+        transform: translate(${translateX}px, ${translateY}px) scale(${scale});
+        opacity: 0.9;
+      }
+      20% {
+        transform: translate(${translateX}px, ${translateY}px) scale(${scale});
+        opacity: 0.95;
+      }
+      100% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+      }
+    }
+  `;
   document.head.appendChild(style);
-}
+
+  // 设置初始状态
+  el.style.transformOrigin = '0 0';
+};
 
 const addBackPage = () => {
   nextTick(() => {
     const backButton = document.querySelector('.backPage');
     if (backButton) {
-      backButton.style.display = 'block'; // 改为 block 确保显示
+      backButton.style.display = 'block';
     }
   });
 };
 
 const handleOverlayClose = () => {
-  close();
+  window.history.pushState({}, "", "/");
+  show.value = false;
+  document.title = 'Welcome to Hashtopia!';
+  
   const backButton = document.querySelector('.backPage');
   if (backButton) {
     backButton.style.display = 'none';
   }
-  // 恢复导航栏显示
+  
   const navigationElements = document.querySelectorAll('.menu,.el-header');
   navigationElements.forEach(el => {
     el.style.display = '';
   });
 };
 
-// 修改 close 函数
-const close = () => {
-  window.history.pushState({}, "", "/");
-  show.value = false;
-  document.title = '欢迎来到Dlock!'
-  // 恢复导航栏显示
-  const navigationElements = document.querySelectorAll('.menu,.el-header');
-  navigationElements.forEach(el => {
-    el.style.display = '';
-  });
-};
 
-// 更新 onAfterEnter
 const onAfterEnter = (el) => {
   el.style = 'background-color: #fff';
   const backButton = el.querySelector('.backPage');
@@ -155,6 +208,7 @@ const onAfterLeave = () => {
   }
 }
 
+const route = useRoute();
 
 onMounted(async () => {
   await doQuery(0);
@@ -165,6 +219,19 @@ onMounted(async () => {
     await nextTick();
     addBackPage();
   }
+  const postId = route.params.id;
+  if (postId && sessionStorage.getItem('cardDetailSource')) {
+    await reopenDetail(postId);
+  }
+  const currentPath = window.location.pathname;
+  if (currentPath.includes('/explore/')) {
+    const postId = currentPath.split('/').pop();
+    if (postId) {
+      await getDetails(postId);
+      show.value = true;
+      await nextTick();
+    }
+  }
 });
 
 
@@ -172,7 +239,7 @@ onMounted(async () => {
 
 <template>
   <div class="Empty" v-if="cards.length === 0">
-    <el-empty description="没有帖子..."/>
+    <el-empty description="No posts..."/>
   </div>
   <div v-else>
     <home-card :list="cards" 
@@ -191,8 +258,8 @@ onMounted(async () => {
       @before-leave="onBeforeLeave"
       @after-leave="onAfterLeave"
   >
-    <div class="overlay" v-if="show">
-      <button class="backPage" @click="close" style="display: none;">
+    <div class="overlay" v-if="show" @click.self="handleOverlayClose">
+      <button class="backPage" @click="handleOverlayClose">
         <el-icon>
           <Back/>
         </el-icon>
@@ -200,8 +267,8 @@ onMounted(async () => {
       <card-detail 
         :detail="detail" 
         @afterDoComment="afterDoComment" 
-        @needBackPage="addBackPage"
         @closeOverlay="handleOverlayClose" 
+        @needBackPage="addBackPage"
         ref="overlay"
       />
     </div>
@@ -244,27 +311,23 @@ onMounted(async () => {
 
 .backPage .el-icon {
   font-size: 20px;
-  color: #666; /* 灰色图标 */
+  color: #666;
 }
 
-/* 添加hover效果 */
 .backPage:hover {
   background: rgba(0, 0, 0, 0.1);
 }
 
 
 
-/* 添加card-detail的样式 */
 .card-detail {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  margin-top: 48px; /* 为顶部返回按钮留出空间 */
+  margin-top: 48px;
 }
 
 
-
-/* 加载更多按钮样式 */
 .load-more-container {
   display: flex;
   justify-content: center;
@@ -291,10 +354,10 @@ onMounted(async () => {
 }
 
 .fade-enter-active {
-  animation: scale-up-center 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+  animation: scale-up-center 0.4s cubic-bezier(0.33, 1, 0.68, 1) both;
 }
 
 .fade-leave-active {
-  animation: scale-up-center 0.3s ease-out both reverse;
+  animation: scale-up-center 0.4s cubic-bezier(0.32, 0, 0.67, 0) both reverse;
 }
 </style>

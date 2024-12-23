@@ -1,6 +1,5 @@
 import http from "@/utils/http";
 
-// 登录
 export const login = ({email, password}) => {
     return http({
         url: '/login/',
@@ -15,8 +14,6 @@ export const login = ({email, password}) => {
     })
 }
 
-
-// 注册
 export const Register = ({email, username, password}) => {
     return http({
         url: '/register/',
@@ -32,7 +29,21 @@ export const Register = ({email, username, password}) => {
     })
 }
 
-// 访问用户主页
+export const changePassword = ({oldPassword, newPassword}) => {
+    return http({
+        url: '/change-password/',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        data: {
+            old_password: oldPassword,
+            new_password: newPassword
+        }
+    })
+}
+
 export const queryUserIndex = ({id}) => {
     return http({
         url: '/index/',
@@ -43,7 +54,6 @@ export const queryUserIndex = ({id}) => {
     })
 }
 
-// 上传帖子
 export const uploadPost = (data) => {
     return http({
         url: '/upload/info/',
@@ -52,7 +62,6 @@ export const uploadPost = (data) => {
     })
 }
 
-// 帖子详情
 export const postDetail = ({id}) => {
     return http({
         url: '/post/detail/',
@@ -63,7 +72,6 @@ export const postDetail = ({id}) => {
     })
 }
 
-// 主页帖子
 export const queryPost = ({offset, query}) => {
     return http({
         url: '/post/',
@@ -72,7 +80,6 @@ export const queryPost = ({offset, query}) => {
     })
 }
 
-// 评论帖子
 export const doComment = ({data}) => {
     return http({
         url: '/comment/',
@@ -81,7 +88,6 @@ export const doComment = ({data}) => {
     })
 }
 
-// 用户关注
 export const doFocus = ({id}) => {
     return http({
         url: '/focus/',
@@ -90,7 +96,6 @@ export const doFocus = ({id}) => {
     })
 }
 
-// 获取用户关注
 export const queryUserFocus = () => {
     return http({
         url: '/user/focus/',

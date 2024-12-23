@@ -24,7 +24,7 @@ const userStore = useUserStore()
 // 更改用户对帖子的状态 /////////////////////////////////////////////////
 const doFocusOn = async (id) => {
   if (userStore.userInfo.id === id) {
-    ElMessage({type: 'warning', message: '不能对自己进行关注操作'})
+    ElMessage({type: 'warning', message: 'Cannot follow yourself'})
     return
   }
   const res = await doFocus({id})
@@ -118,7 +118,7 @@ const commentMain = (item) => {
   to.value = item.id
   console.log(item)
   const toPeople = item.user.username
-  commentInput.value.input.placeholder = `回复${toPeople}: `
+  commentInput.value.input.placeholder = `Reply ${toPeople}: `
 }
 const loadReply = async (item) => {
   const offset = item.replies.length
@@ -128,12 +128,9 @@ const loadReply = async (item) => {
   item.replyCount -= res.count
 }
 const clearReply = () => {
-  commentInput.value.input.placeholder = `说点什么....`
+  commentInput.value.input.placeholder = `Say something....`
   to.value = 0
 }
-/////////////////////////////////////////////////////////////////
-
-// 无限加载评论 //////////////////////////////////////////////////
 const disabled = ref(true)
 const load = async () => {
   disabled.value = true
@@ -148,16 +145,17 @@ const load = async () => {
     disabled.value = true
   }
 }
-//////////////////////////////////////////////////////////////
 
-onMounted(() => load())
+onMounted(async () => {
+  await load();
+});
 </script>
 
 <template>
   <div class="box" v-if="detail.id">
     <div style="border-radius: 0.8rem;background-color:#fff;">
       <el-row :gutter="50">
-        <!-- 图片区 -->
+        <!-- Image Area -->
         <el-col :span="50">
           <div class="banner">
             <el-carousel height="45vw">
@@ -169,23 +167,20 @@ onMounted(() => load())
             </el-carousel>
           </div>
         </el-col>
-        <!-- 图片区结束 -->
-        <!-- 卡牌详情区 -->
+        <!-- Image Area End -->
+        <!-- Card details area-->
         <el-col :span="50">
           <div class="info" style="width: 35vw;margin-top: 0.5vw;">
-            <!-- 卡片头部 -->
             <el-row style="align-items: center;width: 35vw;">
               <a :href="`/user/index/${detail.user.id}`">
                 <el-avatar :src="detail.user.avatar" size="large"/>
               </a>
               <div class="username">{{ detail.user.username }}</div>
-              <button @click="cancelFocusOn(detail.user.id)" class="focusOn" v-if="checkFollow(detail.user.id)">已关注
+              <button @click="cancelFocusOn(detail.user.id)" class="focusOn" v-if="checkFollow(detail.user.id)">Followed
               </button>
-              <button class="focusOn" v-else @click="doFocusOn(detail.user.id)">关注</button>
+              <button class="focusOn" v-else @click="doFocusOn(detail.user.id)">Follow</button>
             </el-row>
-            <!-- 卡片头部结束 -->
             <div class="main-content">
-              <!-- 卡片内容 -->
               <el-row style="margin-top: 0;">
                 <h2>{{ detail.title }}</h2>
               </el-row>
@@ -195,13 +190,13 @@ onMounted(() => load())
               <el-row>
                 <time class="time">{{ detail.createTime }}</time>
               </el-row>
-              <!-- 卡片内容结束 -->
+              <!-- End of card content -->
               <hr/>
-              <!-- 评论区 -->
+              <!-- Comments -->
               <div class="comments" v-if="comments" v-infinite-scroll="load" :infinite-scroll-disabled="disabled">
-                <el-empty description="现在还没有评论" v-if="comments.length === 0"/>
+                <el-empty description="There are no comments yet" v-if="comments.length === 0"/>
                 <div v-else class="commentBox">
-                  <div class="commentTitle" style="margin-bottom: 0.5vw;">共{{ detail.commentCount }}条评论</div>
+                  <div class="commentTitle" style="margin-bottom: 0.5vw;">Total {{ detail.commentCount }} comments</div>
                   <div v-for="item in comments" :key="item.id">
                     <el-row :gutter="20">
                       <el-col :span="2.5">
@@ -219,7 +214,6 @@ onMounted(() => load())
                       </el-col>
                       <el-col style="margin-top: 0.3vw;">
                         <div v-for="reply in item.replies" :key="reply.id" style="margin-left: 2vw">
-                          <!-- 渲染子评论的内容 -->
                           <el-row :gutter="20">
                             <el-col :span="2.5">
                               <a :href="`/user/index/${reply.user.id}`">
@@ -233,9 +227,9 @@ onMounted(() => load())
                             </el-col>
                           </el-row>
                         </div>
-                        <div class="more" @click="loadReply(item)" v-if="item.replyCount > 0">展开{{
+                        <div class="more" @click="loadReply(item)" v-if="item.replyCount > 0">Expand{{
                             item.replyCount
-                          }}条回复
+                          }}Replies
                         </div>
                       </el-col>
                     </el-row>
@@ -244,7 +238,7 @@ onMounted(() => load())
                 </div>
               </div>
             </div>
-            <!-- 评论区结束 -->
+            <!-- End of comments section -->
           </div>
           <div class="bottomArea">
             <div class="buttonArea">
@@ -274,18 +268,18 @@ onMounted(() => load())
                         d="M512 0C226.742857 0 0 197.485714 0 446.171429c0 138.971429 73.142857 270.628571 190.171429 351.085714L190.171429 1024l226.742857-138.971429c29.257143 7.314286 65.828571 7.314286 95.085714 7.314286 285.257143 0 512-197.485714 512-446.171429C1024 197.485714 797.257143 0 512 0zM256 512C219.428571 512 190.171429 482.742857 190.171429 446.171429S219.428571 380.342857 256 380.342857c36.571429 0 65.828571 29.257143 65.828571 65.828571S292.571429 512 256 512zM512 512C475.428571 512 446.171429 482.742857 446.171429 446.171429S475.428571 380.342857 512 380.342857c36.571429 0 65.828571 29.257143 65.828571 65.828571S548.571429 512 512 512zM768 512C731.428571 512 702.171429 482.742857 702.171429 446.171429s29.257143-65.828571 65.828571-65.828571c36.571429 0 65.828571 29.257143 65.828571 65.828571S804.571429 512 768 512z"
                         p-id="6376" fill="#cecccc"></path>
                   </svg>
-                  <el-text size="large" tag="b" type="info">{{ detail.commentCount }}</el-text>
+                  <el-text size="small" tag="b" type="info">{{ detail.commentCount }}</el-text>
                 </el-button>
               </el-row>
             </div>
             <el-input
-                v-model="content" class="comment-input my" type="text" placeholder="说点什么..." ref="commentInput"
+                v-model="content" class="comment-input my" type="text" placeholder="Say something..." ref="commentInput"
                 :prefix-icon="Edit" @keyup.enter="sendComment(detail, to)" clearable style="margin-top: 0.3vw"
                 :disabled="review"
             />
           </div>
         </el-col>
-        <!-- 卡牌详情区结束 -->
+        <!-- End of card details area -->
       </el-row>
     </div>
   </div>
@@ -331,7 +325,7 @@ onMounted(() => load())
 .banner {
   width: 45vw;
   border-radius: 0.8rem;
-  overflow: hidden;    /* 防止内容溢出 */
+  overflow: hidden;
 }
 
 .username {
@@ -353,16 +347,16 @@ onMounted(() => load())
 }
 
 .image {
-  width: 100%;         /* 改为100%以适应容器宽度 */
-  height: 45vw;       /* 与carousel高度保持一致 */
+  width: 100%;       
+  height: 45vw;      
   border-radius: 0.8rem 0 0 0.8rem;
-  object-fit: contain; /* 保持图片比例完整显示 */
-  background-color: white; /* 添加背景色填充可能的空白区域 */
+  object-fit: contain; 
+  background-color: white;
 }
 
 .main-content::-webkit-scrollbar {
-  width: 0.1em; /* 设置滚动条宽度为0.1em */
-  background-color: transparent; /* 设置滚动条背景颜色为透明 */
+  width: 0.1em;
+  background-color: transparent;
 }
 
 .main-content {

@@ -3,7 +3,7 @@ import {computed, onBeforeMount, onMounted, ref, onBeforeUnmount} from 'vue'
 import {queryUserPostControl, postDelete, controlUserCollectOrLike, unFollow, removeFan} from "@/apis/main";
 import {ElMessage} from 'element-plus'
 import {useUserStore} from "@/stores/user";
-import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import enUS from 'element-plus/dist/locale/en.mjs'
 import {useTableStore} from "@/stores/tableStore";
 import {InfoFilled} from "@element-plus/icons-vue";
 import {useRouter} from "vue-router";
@@ -17,46 +17,46 @@ const checkLogin = () => {
 }
 
 onBeforeMount(() => checkLogin())
-// 配置全局语言和表格缓存//////////////////////////////////////////////
-const locale = zhCn
+// Configuring global language and table caches//////////////////////////////////////////////
+const locale = enUS
 const tableStore = useTableStore();
 const loading = ref(true)
 const isMobile = ref(false)
-// 控制选择器 /////////////////////////////////////////////////////
+// Control selector /////////////////////////////////////////////////////
 const value = ref('posts')
 
 const checkMobile = () => {
-  isMobile.value = window.innerWidth <= 768
+  isMobile.value = window.innerWidth <= 900
 }
 
 const options = [
   {
-    label: '帖子管理',
+    label: 'Post Management',
     options: [
       {
         value: 'posts',
-        label: '个人帖子管理',
+        label: 'Personal Post',
       },
       {
         value: 'collected',
-        label: '收藏帖子管理',
+        label: 'Collected Post',
       },
       {
         value: 'favorites',
-        label: '喜欢帖子管理'
+        label: 'Like Post'
       }
     ],
   },
   {
-    label: '个人用户管理',
+    label: 'User management',
     options: [
       {
         value: 'fans',
-        label: '粉丝管理',
+        label: 'Fans',
       },
       {
         value: 'follow',
-        label: '关注管理',
+        label: 'Follow',
       },
     ],
   },
@@ -68,7 +68,6 @@ const type = computed(() => {
     return 2
 })
 const changeShow = async () => {
-  // 先将多选置空
   multipleSelection.value = [];
   const valueType = value.value;
   const offset = 0;
@@ -103,7 +102,6 @@ const changeShow = async () => {
 };
 ////////////////////////////////////////////////////////////////
 
-// 表格/////////////////////////////////////////////////////////
 const tableData = ref([])
 const userData = ref([])
 const multipleSelection = ref([])
@@ -140,6 +138,11 @@ const handleDelete = async (index, row) => {
       const operator = 1
       const type = value.value === 'collected' ? 'collect' : 'like'
       const res = await controlUserCollectOrLike({post_id, operator, type})
+      // Update the store after successful API call
+      if (res.info) {
+        const storeUpdateType = type === 'collect' ? 3 : 2
+        userStore.removeFocus(storeUpdateType, post_id)
+      }
       ElMessage({type: 'success', message: res.info})
     }
   } else {
@@ -159,36 +162,36 @@ const getTableColumns = computed(() => {
   if (isMobile.value) {
     return type.value === 1 ? [
       { type: 'selection', width: '55' },
-      { label: '标题', prop: 'title' },
-      { label: '操作', slot: 'operation', align: 'center' }
+      { label: 'Title', prop: 'title' },
+      { label: 'Operation', slot: 'operation', align: 'center' }
     ] : [
       { type: 'selection', width: '55' },
-      { label: '用户名', prop: 'username' },
-      { label: '操作', slot: 'operation', align: 'center' }
+      { label: 'Username', prop: 'username' },
+      { label: 'Operation', slot: 'operation', align: 'center' }
     ]
   }
   
   return type.value === 1 ? [
     { type: 'selection', width: '55' },
-    { label: '日期', prop: 'date', sortable: true },
-    { label: '作者', prop: 'username' },
-    { label: '标题', prop: 'title' },
-    { label: '内容', prop: 'content', showOverflowTooltip: true },
-    { label: '评论量', prop: 'commentCount', sortable: true },
-    { label: '点赞量', prop: 'likeCount', sortable: true },
-    { label: '收藏量', prop: 'collectCount', sortable: true },
-    { label: '操作', slot: 'operation', align: 'center' }
+    { label: 'Date', prop: 'date', sortable: true },
+    { label: 'Username', prop: 'username' },
+    { label: 'Title', prop: 'title' },
+    { label: 'Content', prop: 'content', showOverflowTooltip: true },
+    { label: 'Comment Count', prop: 'commentCount', sortable: true },
+    { label: 'Like Count', prop: 'likeCount', sortable: true },
+    { label: 'Collect Count', prop: 'collectCount', sortable: true },
+    { label: 'Operation', slot: 'operation', align: 'center' }
   ] : [
     { type: 'selection', width: '55' },
-    { label: '头像', slot: 'avatar', align: 'center' },
-    { label: '用户名', prop: 'username', sortable: true, showOverflowTooltip: true },
-    { label: '粉丝量', prop: 'fans' },
-    { label: '关注量', prop: 'follow' },
-    { label: '笔记数', prop: 'note' },
-    { label: '操作', slot: 'operation', align: 'center' }
+    { label: 'Avatar', slot: 'avatar', align: 'center' },
+    { label: 'Username', prop: 'username', sortable: true, showOverflowTooltip: true },
+    { label: 'Fans', prop: 'fans' },
+    { label: 'Following', prop: 'follow' },
+    { label: 'Notes', prop: 'note' },
+    { label: 'Operation', slot: 'operation', align: 'center' }
   ]
 })
-// 分页器 ///////////////////////////////////////////////////////
+// Paginator ///////////////////////////////////////////////////////
 const pageSize = ref(10)
 const currentPage = ref(1)
 const total_post = ref(0)
@@ -230,6 +233,46 @@ const handleCurrentChange = async (val) => {
     total_user.value = total;
   }
 };
+
+const handleBulkDelete = async () => {
+  try {
+    for (const item of multipleSelection.value) {
+      const index = tableData.value.findIndex(row => row.id === item.id)
+      if (index !== -1) {
+        if (type.value === 1) {
+          if (value.value === 'posts') {
+            await postDelete({id: item.id})
+          } else if (value.value === 'collected' || value.value === 'favorites') {
+            const post_id = item.id
+            const operator = 1
+            const deleteType = value.value === 'collected' ? 'collect' : 'like'
+            const res = await controlUserCollectOrLike({post_id, operator, type: deleteType})
+            // Update the store after successful API call
+            if (res.info) {
+              const storeUpdateType = deleteType === 'collect' ? 3 : 2
+              userStore.removeFocus(storeUpdateType, post_id)
+            }
+          }
+          tableData.value.splice(index, 1)
+        } else {
+          if (value.value === 'fans') {
+            await removeFan({id: item.id})
+          } else if (value.value === 'follow') {
+            await unFollow({id: item.id})
+            userStore.removeFocus(1, item.id)
+          }
+          userData.value.splice(index, 1)
+        }
+      }
+    }
+    ElMessage({type: 'success', message: 'Successfully deleted selected items'})
+    tableRef.value.clearSelection()
+  } catch (error) {
+    ElMessage({type: 'error', message: 'Failed to delete selected items'})
+  }
+}
+
+
 //////////////////////////////////////////////////////////////////
 onMounted(() => {
   checkMobile()
@@ -258,11 +301,11 @@ onBeforeUnmount(() => {
                 effect="light"
             >
               <template #content>
-                <h2 style="color:red;">表格内容会缓存到本地</h2>
-                <p>如果进行
-                  <span style="color:red;">修改数据</span>
-                  没有更新
-                  <span style="color:red;">刷新就可以了</span>
+                <h2 style="color:red;">The table contents will be cached locally</h2>
+                <p>If you
+                  <span style="color:red;">modify data</span>
+                  It is not updated
+                  <span style="color:red;">Just refresh</span>
                 </p>
               </template>
               <el-icon>
@@ -304,7 +347,7 @@ onBeforeUnmount(() => {
                     :size="isMobile ? 'small' : 'default'"
                     type="danger"
                     @click="handleDelete(scope.$index, scope.row)">
-                  删除
+                  Delete
                 </el-button>
               </template>
             </el-table-column>
@@ -312,8 +355,15 @@ onBeforeUnmount(() => {
         </el-table>
 
         <div class="action-buttons" v-show="multipleSelection.length !== 0">
-          <el-button disabled round :size="isMobile ? 'small' : 'default'">选中删除</el-button>
-          <el-button @click="tableRef.clearSelection()" round :size="isMobile ? 'small' : 'default'">清空全选</el-button>
+          <el-button 
+              type="danger" 
+              round 
+              :size="isMobile ? 'small' : 'default'"
+              @click="handleBulkDelete"
+          >
+            Delete Selected
+          </el-button>
+          <el-button @click="tableRef.clearSelection()" round :size="isMobile ? 'small' : 'default'">Clear All</el-button>
         </div>
 
         <div class="pagination">
@@ -350,7 +400,7 @@ onBeforeUnmount(() => {
                     :size="isMobile ? 'small' : 'default'"
                     type="danger"
                     @click="handleDelete(scope.$index, scope.row)">
-                  移除
+                  Remove
                 </el-button>
               </template>
             </el-table-column>
@@ -358,8 +408,15 @@ onBeforeUnmount(() => {
         </el-table>
 
         <div class="action-buttons" v-show="multipleSelection.length !== 0">
-          <el-button disabled round :size="isMobile ? 'small' : 'default'">选中删除</el-button>
-          <el-button @click="tableRef.clearSelection()" round :size="isMobile ? 'small' : 'default'">清空全选</el-button>
+          <el-button 
+              type="danger" 
+              round 
+              :size="isMobile ? 'small' : 'default'"
+              @click="handleBulkDelete"
+          >
+            Delete Selected
+          </el-button>
+          <el-button @click="tableRef.clearSelection()" round :size="isMobile ? 'small' : 'default'">Clear All</el-button>
         </div>
 
         <div class="pagination">
@@ -383,15 +440,30 @@ onBeforeUnmount(() => {
   width: 100%;
   padding: 1rem;
   box-sizing: border-box;
+  height: 92vh; /* Full viewport height */
+  display: flex;
+  flex-direction: column;
 }
 
 .select-container {
   margin-bottom: 1.25rem;
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .table-container {
   width: 100%;
-  overflow-x: auto;
+  flex-grow: 1; /* Allow growing */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Important for Firefox */
+  position: relative;
+}
+
+/* Make the table scrollable */
+.table-container :deep(.el-table) {
+  height: 100%;
+  max-height: calc(92vh - 200px); /* Adjust based on header/footer height */
+  overflow-y: auto;
 }
 
 .action-buttons {
@@ -399,22 +471,28 @@ onBeforeUnmount(() => {
   display: flex;
   gap: 0.5rem;
   justify-content: center;
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .pagination {
   margin-top: 1.25rem;
   display: flex;
   justify-content: center;
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 /* Mobile Styles */
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 900) {
   .container {
     padding: 0.5rem;
   }
 
   .select-container {
     margin-bottom: 1rem;
+  }
+
+  .table-container :deep(.el-table) {
+    max-height: calc(92vh - 180px); /* Slightly adjusted for mobile */
   }
 
   .action-buttons {
@@ -433,5 +511,45 @@ onBeforeUnmount(() => {
   .container {
     padding: 0.75rem;
   }
+
+  .table-container :deep(.el-table) {
+    max-height: calc(92vh - 190px); /* Adjusted for tablet */
+  }
+}
+
+/* Handle table header sticky positioning */
+.table-container :deep(.el-table__header-wrapper) {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  background: #fff;
+}
+
+/* Ensure proper scrollbar appearance */
+.table-container :deep(.el-table__body-wrapper) {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* Custom scrollbar styling for webkit browsers */
+.table-container :deep(.el-table__body-wrapper)::-webkit-scrollbar {
+  width: 6px;
+}
+
+.table-container :deep(.el-table__body-wrapper)::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.table-container :deep(.el-table__body-wrapper)::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.table-container :deep(.el-table__body-wrapper)::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+:deep(.table-container){
+  z-index: 0;
 }
 </style>

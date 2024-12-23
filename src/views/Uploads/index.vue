@@ -24,6 +24,7 @@ const title = ref('');
 const content = ref('');
 const postId = ref(0);
 const upload = ref(null);
+const baseURL = import.meta.env.VITE_API_BASE_URL
 
 // Control the visibility of the edit area
 const showEditArea = computed(() => {

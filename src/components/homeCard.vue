@@ -68,7 +68,7 @@ const handleLoadMore = () => {
       </template>
     </Waterfall>
 
-    <!-- 加载更多区域 -->
+    <!-- Load more -->
     <div class="load-more-container">
       <el-button
         v-if="hasMore"
@@ -138,7 +138,6 @@ a {
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
 }
 
 .card-title {
@@ -149,7 +148,6 @@ a {
   line-height: 1.2;
 }
 
-/* 加载更多按钮样式 */
 .load-more-container {
   display: flex;
   justify-content: center;

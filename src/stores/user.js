@@ -54,7 +54,7 @@ export const useUserStore = defineStore('user', () => {
 
     const userLogout = async () => {
         userInfo.value = {};
-        return {info: "成功退出登录"};
+        return {info: "Log out Successfully"};
     };
 
     const changeInfo = ({username, signature, avatar}) => {

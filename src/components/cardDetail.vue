@@ -20,15 +20,15 @@ const props = defineProps({
 
 const isMobile = ref(window.innerWidth <= 768);
 
-const checkDevice = () => {
+// Add resize handler
+const handleResize = () => {
   isMobile.value = window.innerWidth <= 768;
 };
 
-// Add a ref to track the component's mounted state
 const isMounted = ref(false);
 
 const hideNavigation = async () => {
-  await nextTick(); // Ensure DOM is updated
+  await nextTick();
   const navigationElements = document.querySelectorAll('.menu,.el-header');
   navigationElements.forEach(el => {
     if (el) el.style.display = 'none';
@@ -38,7 +38,7 @@ const hideNavigation = async () => {
 const showNavigation = () => {
   const navigationElements = document.querySelectorAll('.menu,.el-header');
   navigationElements.forEach(el => {
-    if (el) el.style.display = 'block'; // Be explicit with display value
+    if (el) el.style.display = 'block';
   });
 };
 
@@ -51,23 +51,32 @@ const handleComponentMounted = async () => {
   }
 };
 
-onMounted(async () => {
-  checkDevice();
-  window.addEventListener('resize', checkDevice);
-  await handleComponentMounted();
+onMounted(() => {
+  // Add resize event listener
+  window.addEventListener('resize', handleResize);
+  
+  if (window.performance && window.performance.navigation.type === 1) {
+    const savedPath = sessionStorage.getItem('cardDetailSource');
+    if (savedPath) {
+      window.location.href = savedPath;
+    }
+  }
 });
 
-
-
 onUnmounted(() => {
-  window.removeEventListener('resize', checkDevice);
+  // Remove resize event listener
+  window.removeEventListener('resize', handleResize);
+  sessionStorage.removeItem('cardDetailSource');
   showNavigation();
 });
 
-// 监听 overlay 关闭
 const handleClose = () => {
   showNavigation();
   emit('closeOverlay');
+};
+
+const handleAfterComment = () => {
+  emit('afterDoComment');
 };
 
 const route = useRoute();
@@ -77,7 +86,6 @@ watch(() => route.path, async () => {
   emit('needBackPage');
 });
 
-// 添加 Suspense fallback 处理
 const handleFallback = () => {
   hideNavigation();
   emit('needBackPage');
