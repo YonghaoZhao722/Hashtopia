@@ -220,16 +220,16 @@ onMounted(async () => {
                                 <el-avatar :src="reply.user.avatar" :size="25"></el-avatar>
                               </a>
                             </el-col>
-                            <el-col :span="20" style="font-size: 1vw">
+                            <el-col :span="20" style="font-size: 1vw;margin-bottom: 2vw;">
                               <div style="color:#33333399;">{{ reply.user.username }}</div>
-                              <div style="color:#333333;margin-top: 1vw;margin-bottom: 1vw;">{{ reply.content }}</div>
+                              <div style="color:#333333;margin-top: 0.5vw;margin-bottom: 0.5vw;">{{ reply.content }}</div>
                               <time class="time">{{ reply.createTime }}</time>
                             </el-col>
                           </el-row>
                         </div>
-                        <div class="more" @click="loadReply(item)" v-if="item.replyCount > 0">Expand{{
+                        <div class="more" @click="loadReply(item)" v-if="item.replyCount > 0">Expand {{
                             item.replyCount
-                          }}Replies
+                          }} replies
                         </div>
                       </el-col>
                     </el-row>

@@ -1034,7 +1034,7 @@ h2 {
     overflow: hidden;
   }
   .userInfo {
-    padding: 1vh;
+    padding: 2.5vh;
     width: 100%;
     height: 12vh;
   }
