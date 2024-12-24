@@ -35,15 +35,15 @@ const options = [
     options: [
       {
         value: 'posts',
-        label: 'Personal Post',
+        label: 'Posts',
       },
       {
         value: 'collected',
-        label: 'Collected Post',
+        label: 'Collects',
       },
       {
         value: 'favorites',
-        label: 'Like Post'
+        label: 'Likes'
       }
     ],
   },
@@ -52,11 +52,11 @@ const options = [
     options: [
       {
         value: 'fans',
-        label: 'Fans',
+        label: 'Following',
       },
       {
         value: 'follow',
-        label: 'Follow',
+        label: 'Followers',
       },
     ],
   },

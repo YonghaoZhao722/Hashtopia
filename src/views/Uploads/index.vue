@@ -176,6 +176,8 @@ const handleChange = (file, fileList) => {
 </script>
 
 <template> 
+<el-container class="page-container">
+  <el-main class="scrollable-main">
   <div class="upload-container">
     <!-- Image Upload Area -->
     <div class="upload-area">
@@ -239,17 +241,28 @@ const handleChange = (file, fileList) => {
 
   <!-- Image Preview Modal -->
   <el-dialog v-model="dialogVisible">
-    <img :src="dialogImageUrl" alt="Preview Image" style="width: 100%"/>
+    <img :src="dialogImageUrl" alt="Preview Image" style="width: 100%;"/>
   </el-dialog>
+  </el-main>
+</el-container>
 </template>
 
 <style scoped>
+.page-container {
+  height: 90vh;
+}
+
+.scrollable-main {
+  height: 100%;
+  overflow-y: auto;
+  padding: 0;
+}
+
 .upload-container {
   max-width: 800px;
   margin: 20px auto;
   padding: 20px;
 }
-
 .upload-title {
   font-size: 16px;
   color: #333;
@@ -266,7 +279,7 @@ const handleChange = (file, fileList) => {
 .drop-zone {
   border: 2px dashed #dcdfe6;
   border-radius: 8px;
-  padding: 20px;
+  padding: 2vw;
   transition: all 0.3s;
 }
 
@@ -316,10 +329,12 @@ const handleChange = (file, fileList) => {
 }
 
 :deep(.el-upload--picture-card) {
-  --el-upload-picture-card-size: 100px;
+  --el-upload-picture-card-size: 10vw;
 }
-
+:deep(.el-upload-list__item){
+  width: 10vw;
+  height: 10vw;
+}
 :deep(.el-upload-list--picture-card .el-upload-list__item) {
-  --el-upload-list-picture-card-size: 100px;
 }
 </style>
