@@ -15,6 +15,7 @@ import 'vue-waterfall-plugin-next/dist/style.css'
 import '../../styles/common.css'
 
 const route = useRoute()
+const router = useRoute()
 const Details = controlDetail()
 const userStore = useUserStore()
 const baseURL = import.meta.env.VITE_API_BASE_URL
@@ -220,21 +221,30 @@ const onAfterLeave = () => {
   }
 }
 
+const initializeFocusList = async () => {
+  // Check if user is logged in by verifying userStore.userInfo exists
+  if (!userStore.userInfo || !userStore.userInfo.id) {
+    return; // Exit if user is not logged in
+  }
+
+  // Initialize focus list only if user is logged in
+  if (!userStore.userFocus.value) {
+    userStore.userFocus.value = [];
+    try {
+      const focusResult = await queryUserFocus();
+      if (focusResult?.follow) {
+        userStore.userFocus.value = focusResult.follow;
+      }
+    } catch (error) {
+      console.error('Failed to get follow list:', error);
+    }
+  }
+};
+
 onMounted(async () => {
   await getUserInfo()
   // Ensure userFocus is initialized
-  if (!userStore.userFocus.value) {
-    userStore.userFocus.value = []
-    // Get follow list
-    try {
-      const focusResult = await queryUserFocus()
-      if (focusResult && focusResult.follow) {
-        userStore.userFocus.value = focusResult.follow
-      }
-    } catch (error) {
-      console.error('Failed to get follow list:', error)
-    }
-  }
+  await initializeFocusList();
   await Toggle()
   const currentPath = window.location.pathname;
   if (currentPath.includes('/explore/')) {
@@ -340,6 +350,7 @@ const closeDialog = async () => {
 }
 
 const onSuccess = async (response) => {
+  await getUserInfo()
   avatar.value = response.filepath
   // Update user store with new avatar
   userStore.changeInfo({
@@ -347,7 +358,7 @@ const onSuccess = async (response) => {
     avatar: response.filepath
   })
   // Refresh user information
-  await getUserInfo()
+  
   // Force refresh all components that depend on userStore
   await nextTick()
 }
@@ -359,7 +370,6 @@ const onError = async (error) => {
   })
   const userStore = useUserStore()
   await userStore.userLogout()
-  await router.replace('/')
 }
 
 const openDialog = () => {
@@ -632,7 +642,7 @@ const doUpdate = async () => {
           :show-file-list="true"
           list-type="picture-card"
           ref="upload"
-          action="http://localhost:8000/user/avatar/"
+          :action="baseURL + '/user/avatar/'"
           :limit="1"
           :on-exceed="handleExceed"
           :auto-upload="false"
@@ -1064,8 +1074,6 @@ h2 {
     height: 15vw !important;
   }
 
-
-
   .tagArea {
     position: absolute;
     left: 0;
@@ -1096,16 +1104,16 @@ h2 {
     width: 20vw;
     max-width: 100px;
     margin: -10px;
-    font-size: 110%;
     height: auto;
     margin-left: 1rem;
+    margin-top: 20px;
   }
 
   .focusOn {
     margin: -10px;
     font-size: 12px;
-    height: auto;
     min-width: auto;
+    margin-top: 20px;
   }
 
 
@@ -1113,6 +1121,7 @@ h2 {
   margin-top: 6vw;
  }
  .scroll-container {
+    margin-top: 1v;
     height: calc(100vh - 200px);
     padding: 0 10px;
   }
@@ -1149,7 +1158,7 @@ h2 {
     height: 3vh;
     justify-content: space-between;
     margin-top: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 2vh;
   }
 
   .el-radio-button {

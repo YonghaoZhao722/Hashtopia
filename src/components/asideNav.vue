@@ -30,7 +30,13 @@ const changeShow = () => {
 
       <div class="actionsBar">
         <div>
-          <button id="menuBtn" type="button" @click="toggleMenu"><i class="iconfont icon-hanbaocaidan"></i></button>
+          <button 
+            id="menuBtn" 
+            type="button" 
+            @click="toggleMenu" 
+            aria-label="Toggle menu">
+            <i class="iconfont icon-hanbaocaidan"></i>
+          </button>
           <h3 class="menuText" :class="{ open2: isMenuOpen }">{{ userStore.userInfo.username }}</h3>
         </div>
       </div>
@@ -45,12 +51,18 @@ const changeShow = () => {
         <hr>
       </li>
       <li class="menuItem">
-          <RouterLink to="/user/uploads" class="menuOption">
-            <el-icon size="x-large">
-              <Promotion/>
-            </el-icon>
-            <h5 class="menuText" :class="{ open2: isMenuOpen }">Post</h5>
+          <RouterLink v-if="userStore.userInfo.id" to="/user/uploads" class="menuOption">
+              <el-icon size="x-large">
+                  <Promotion/>
+              </el-icon>
+              <h5 class="menuText" :class="{ open2: isMenuOpen }">Post</h5>
           </RouterLink>
+          <a v-else class="menuOption" @click.prevent="changeShow" href="#">
+              <el-icon size="x-large">
+                  <Promotion/>
+              </el-icon>
+              <h5 class="menuText" :class="{ open2: isMenuOpen }">Post</h5>
+          </a>
       </li>
       <li class="menuItem" v-if="userStore.userInfo.id">
           <RouterLink to="/user/control">
@@ -58,7 +70,7 @@ const changeShow = () => {
               <el-icon size="x-large">
                 <HelpFilled/>
               </el-icon>
-              <h5 class="menuText" :class="{ open2: isMenuOpen }">Post Control</h5>
+              <h5 class="menuText" :class="{ open2: isMenuOpen }">Control</h5>
             </div>
           </RouterLink>
       </li>
@@ -79,7 +91,7 @@ const changeShow = () => {
             <el-popconfirm @confirm="confirm" title="Are you sure you want to exit?" confirm-button-text="Yes"
                            cancel-button-text="No">
               <template #reference>
-                <button type="button" @click=""><i class="iconfont icon-tuichu"></i></button>
+                <button type="button" @click="" aria-label="Exit" ><i class="iconfont icon-tuichu"></i></button>
               </template>
             </el-popconfirm>
           </div>
@@ -128,12 +140,27 @@ const changeShow = () => {
 
 .close {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 40px;
+  right: 40px;
   z-index: 1000;
-  background: transparent;
-  border: none;
-  color: rgb(0, 0, 0);
+  background: #ff4d4d;
+  border: 2px solid #ff3333;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.close:hover {
+  background: #ff3333;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -260,7 +287,6 @@ const changeShow = () => {
 .menu .optionsBar .menuItem .menuOption:hover {
   background-color: #d5d0d0;
   color: #f5131e;
-
 }
 
 .menu .optionsBar .menuItem .menuOption:hover i,
@@ -280,7 +306,7 @@ const changeShow = () => {
 }
 
 .menuText {
-  color: #000;
+  color: black;
   transform: translateX(-250px);
   opacity: 0;
   transition: transform 0.3s ease 0.1s;
@@ -302,7 +328,6 @@ const changeShow = () => {
   opacity: 1;
   transform: translateX(0);
   text-align: center;
-  
 }
 
 .menu .menuBreak {

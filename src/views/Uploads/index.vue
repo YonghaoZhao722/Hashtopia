@@ -19,7 +19,6 @@ onBeforeMount(() => checkLogin());
 
 // File and form data
 const fileList = ref([]);
-const fileListUrl = computed(() => fileList.value.map(item => item.url));
 const title = ref('');
 const content = ref('');
 const postId = ref(0);
@@ -190,7 +189,7 @@ const handleChange = (file, fileList) => {
         
           <el-upload
               v-model:file-list="fileList"
-              action="http://localhost:8000/upload/"
+              action=baseURL
               ref="upload"
               :on-change="handleChange"
               list-type="picture-card"

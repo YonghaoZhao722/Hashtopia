@@ -153,7 +153,7 @@ onMounted(async () => {
             :class="{ 'is-following': checkFollow(detail.user.id) }"
             @click="checkFollow(detail.user.id) ? cancelFocusOn(detail.user.id) : doFocusOn(detail.user.id)"
             v-if="userStore.userInfo.id !== detail.user.id">
-            {{ checkFollow(detail.user.id) ? 'Followed' : 'Follow' }}
+            {{ checkFollow(detail.user.id) ? 'Following' : 'Follow' }}
           </el-button>
         </div>
       </div>
@@ -275,7 +275,7 @@ onMounted(async () => {
 .username {
   font-size: 16px;
   font-weight: 500;
-  color: #333;
+  color: #000000;
 }
 
 .follow-button {
@@ -283,7 +283,7 @@ onMounted(async () => {
   border-radius: 16px;
   font-size: 14px;
   font-weight: 500;
-  background-color: #ff4757;
+  background-color: rgb(231, 5, 5);
   color: white;
   border: none;
   transition: all 0.3s ease;
@@ -398,6 +398,6 @@ onMounted(async () => {
 
 .time {
   font-size: 12px;
-  color: #999;
+  color: #000000;
 }
 </style>

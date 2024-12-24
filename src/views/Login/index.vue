@@ -213,7 +213,14 @@ const toggleForm = () => {
   max-width: 50rem;
   background-color: white;
   border-radius: 2rem;
+  border: 3px solid #ff4d4d;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  position: relative;
+  transition: box-shadow 0.3s ease;
+}
+
+.login-box:hover {
+  box-shadow: 0 6px 12px -1px rgba(255, 77, 77, 0.2), 0 4px 8px -1px rgba(255, 77, 77, 0.1);
 }
 
 .content-wrapper {
@@ -344,6 +351,7 @@ const toggleForm = () => {
   .login-box {
     margin: 0;
     border-radius: 0;
+    height: 95vh;
   }
 
   .content-wrapper {

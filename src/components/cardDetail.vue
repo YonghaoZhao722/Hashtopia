@@ -51,24 +51,6 @@ const handleComponentMounted = async () => {
   }
 };
 
-onMounted(() => {
-  // Add resize event listener
-  window.addEventListener('resize', handleResize);
-  
-  if (window.performance && window.performance.navigation.type === 1) {
-    const savedPath = sessionStorage.getItem('cardDetailSource');
-    if (savedPath) {
-      window.location.href = savedPath;
-    }
-  }
-});
-
-onUnmounted(() => {
-  // Remove resize event listener
-  window.removeEventListener('resize', handleResize);
-  sessionStorage.removeItem('cardDetailSource');
-  showNavigation();
-});
 
 const handleClose = () => {
   showNavigation();
@@ -90,6 +72,34 @@ const handleFallback = () => {
   hideNavigation();
   emit('needBackPage');
 };
+const handleKeydown = (event) => {
+  if (event.key === 'Escape') {
+    handleClose();
+  }
+};
+
+onMounted(() => {
+  // Add resize event listener
+  window.addEventListener('resize', handleResize);
+
+  window.addEventListener('keydown', handleKeydown);
+
+  if (window.performance && window.performance.navigation.type === 1) {
+    const savedPath = sessionStorage.getItem('cardDetailSource');
+    if (savedPath) {
+      window.location.href = savedPath;
+    }
+  }
+});
+
+onUnmounted(() => {
+  // Remove resize event listener
+  window.removeEventListener('resize', handleResize);
+  window.removeEventListener('keydown', handleKeydown);
+  sessionStorage.removeItem('cardDetailSource');
+  showNavigation();
+});
+
 </script>
 
 <template>

@@ -47,7 +47,7 @@ const handleLoadMore = () => {
       <template #default="{ item, url, index }">
         <div class="card">
           <a :href="`/explore/${item.id}`" @click.prevent="(e) => details(item.id, e)">
-            <LazyImg :url="item.img" class="image" />
+            <LazyImg :url="item.img" class="image" :alt="`post_${item.id}_img`"/>
           </a>
           <div class="card-content">
             <div class="card-title-container">
@@ -56,7 +56,7 @@ const handleLoadMore = () => {
             <div class="bottom">
               <el-row class="user-info">
                 <RouterLink :to="`/user/index/${item.user.id}`">
-                  <el-avatar :src="item.user.avatar" size="small" />
+                  <el-avatar :src="item.user.avatar" size="small" :alt="`user_${item.user.id}_avatar`" />
                 </RouterLink>
                 <RouterLink :to="`/user/index/${item.user.id}`">
                  <div class="username">{{ item.user.username }}</div>
@@ -163,17 +163,22 @@ a {
   height: 2vw;
   font-weight: 600;
   font-size: 0.8vw;
-  
+
   min-width: 60px;
   min-height: 25px;
   cursor: pointer;
-  background-color: red;
+  background-color: #cc0000; /* Darkened red for better contrast */
   border-radius: 1000px;
-  color: #fff;
+  color: #ffffff; /* Kept white for strong contrast */
   border-color: transparent;
   margin-top: 1rem;
   transition: all 0.3s;
 }
+
+.load-more-btn:hover {
+  background-color: #b30000; /* Darker red for hover effect */
+}
+
 @media screen and (max-width: 768px) {
  .load-more-btn {
   font-size: 1.2vh;
@@ -184,7 +189,7 @@ a {
 }
 
 .no-more {
-  color: #909399;
+  color: black;
   font-size: 14px;
   text-align: center;
 }

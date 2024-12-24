@@ -5,7 +5,7 @@ import { ElMessage } from 'element-plus'
 const baseURL = import.meta.env.VITE_API_BASE_URL
 
 const http = axios.create({
-    baseURL: 'http://localhost:8000',
+    baseURL: baseURL,
     timeout: 5000,
     withCredentials: true,
     headers: {

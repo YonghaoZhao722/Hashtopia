@@ -173,10 +173,10 @@ onMounted(async () => {
           <div class="info" style="width: 35vw;margin-top: 0.5vw;">
             <el-row style="align-items: center;width: 35vw;">
               <a :href="`/user/index/${detail.user.id}`">
-                <el-avatar :src="detail.user.avatar" size="large"/>
+                <el-avatar :src="detail.user.avatar" size="large" :alt="`${detail.user.id}_avatar`"/>
               </a>
               <div class="username">{{ detail.user.username }}</div>
-              <button @click="cancelFocusOn(detail.user.id)" class="focusOn" v-if="checkFollow(detail.user.id)">Followed
+              <button @click="cancelFocusOn(detail.user.id)" class="focusOn" v-if="checkFollow(detail.user.id)">Following
               </button>
               <button class="focusOn" v-else @click="doFocusOn(detail.user.id)">Follow</button>
             </el-row>
@@ -201,11 +201,11 @@ onMounted(async () => {
                     <el-row :gutter="20">
                       <el-col :span="2.5">
                         <a :href="`/user/index/${item.user.id}`">
-                          <el-avatar :src="item.user.avatar" :size="30"></el-avatar>
+                          <el-avatar :src="item.user.avatar" :size="30" :alt="`${detail.user.id}_avatar`"></el-avatar>
                         </a>
                       </el-col>
                       <el-col :span="20" style="font-size: 1.1vw">
-                        <div style="color:#33333399;">{{ item.user.username }}</div>
+                        <div style="color:black;">{{ item.user.username }}</div>
                         <div style="color:#333333;margin-top: 0.1vw;margin-bottom: 0.3vw;">{{ item.content }}</div>
                         <time class="time">{{ item.createTime }}</time>
                         <el-icon style="float: right;font-size: medium" @click="commentMain(item)">
@@ -217,7 +217,7 @@ onMounted(async () => {
                           <el-row :gutter="20">
                             <el-col :span="2.5">
                               <a :href="`/user/index/${reply.user.id}`">
-                                <el-avatar :src="reply.user.avatar" :size="25"></el-avatar>
+                                <el-avatar :src="reply.user.avatar" :size="25" :alt="`${detail.user.id}_avatar`"></el-avatar>
                               </a>
                             </el-col>
                             <el-col :span="20" style="font-size: 1vw;margin-bottom: 2vw;">
@@ -250,7 +250,7 @@ onMounted(async () => {
                         d="M512 901.746939c-13.583673 0-26.122449-4.179592-37.093878-13.061225-8.881633-7.314286-225.697959-175.020408-312.424489-311.379592C133.746939 532.37551 94.040816 471.24898 94.040816 384.522449c0-144.718367 108.146939-262.269388 240.326531-262.269388 67.395918 0 131.657143 30.82449 177.632653 84.636735 45.453061-54.334694 109.191837-84.636735 177.110204-84.636735 132.702041 0 240.326531 117.55102 240.326531 262.269388 0 85.159184-37.093878 143.673469-67.395919 191.216327l-1.044898 1.567346c-86.726531 136.359184-303.542857 304.587755-312.424489 311.379592-10.44898 8.359184-22.987755 13.061224-36.571429 13.061225z"
                         :fill="!checkFavorite(detail.id)?'#cecccc':'#d81e06'" p-id="3346"></path>
                   </svg>
-                  <el-text size="large" tag="b" type="info">{{ detail.likeCount }}</el-text>
+                  <el-text style="color:black;" size="large" tag="b" type="info">{{ detail.likeCount }}</el-text>
                 </el-button>
                 <el-button link class="warp" @click="doSomething('collect', detail)" :disabled="review">
                   <svg x="1689148085763" class="icon" viewBox="0 0 1024 1024" version="1.1"
@@ -259,7 +259,7 @@ onMounted(async () => {
                         d="M512.009505 25.054894l158.199417 320.580987 353.791078 51.421464L767.995248 646.579761l60.432101 352.365345-316.417844-166.354615-316.436854 166.354615 60.432101-352.365345L0 397.057345l353.791078-51.421464z"
                         :fill="!checkCollect(detail.id)?'#cecccc':'#f4ea2a'" p-id="4913"></path>
                   </svg>
-                  <el-text size="large" tag="b" type="info">{{ detail.collectCount }}</el-text>
+                  <el-text style="color:black;" size="large" tag="b" type="info">{{ detail.collectCount }}</el-text>
                 </el-button>
                 <el-button link class="warp" @click="clearReply">
                   <svg x="1689148939874" class="icon" viewBox="0 0 1024 1024" version="1.1"
@@ -268,10 +268,11 @@ onMounted(async () => {
                         d="M512 0C226.742857 0 0 197.485714 0 446.171429c0 138.971429 73.142857 270.628571 190.171429 351.085714L190.171429 1024l226.742857-138.971429c29.257143 7.314286 65.828571 7.314286 95.085714 7.314286 285.257143 0 512-197.485714 512-446.171429C1024 197.485714 797.257143 0 512 0zM256 512C219.428571 512 190.171429 482.742857 190.171429 446.171429S219.428571 380.342857 256 380.342857c36.571429 0 65.828571 29.257143 65.828571 65.828571S292.571429 512 256 512zM512 512C475.428571 512 446.171429 482.742857 446.171429 446.171429S475.428571 380.342857 512 380.342857c36.571429 0 65.828571 29.257143 65.828571 65.828571S548.571429 512 512 512zM768 512C731.428571 512 702.171429 482.742857 702.171429 446.171429s29.257143-65.828571 65.828571-65.828571c36.571429 0 65.828571 29.257143 65.828571 65.828571S804.571429 512 768 512z"
                         p-id="6376" fill="#cecccc"></path>
                   </svg>
-                  <el-text size="small" tag="b" type="info">{{ detail.commentCount }}</el-text>
+                  <el-text style="color:black;" size="large" tag="b" type="info">{{ detail.commentCount }}</el-text>
                 </el-button>
               </el-row>
             </div>
+            <label for="searchInput" class="sr-only">Say something...</label>
             <el-input
                 v-model="content" class="comment-input my" type="text" placeholder="Say something..." ref="commentInput"
                 :prefix-icon="Edit" @keyup.enter="sendComment(detail, to)" clearable style="margin-top: 0.3vw"
@@ -286,6 +287,11 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.sr-only {
+  position: absolute;
+  clip: rect(0, 0, 0, 0);
+}
+
 .content {
   margin: 0;
   font-weight: 400;
@@ -308,7 +314,7 @@ onMounted(async () => {
 .commentTitle {
   font-size: 1vw;
   line-height: 1.1vw;
-  color: #666;
+  color: rgb(0, 0, 0);
 }
 
 .box {
@@ -337,7 +343,7 @@ onMounted(async () => {
   right: 1vw;
   padding: 0.6rem 0.8rem;
   color: white;
-  background-color: red;
+  background-color: rgb(231, 5, 5);
   border: 0;
   border-radius: 0.8rem;
 }
@@ -369,7 +375,7 @@ onMounted(async () => {
 
 .time {
   font-size: 1vw;
-  color: #999;
+  color: #000000;
 }
 
 .bottomArea {
