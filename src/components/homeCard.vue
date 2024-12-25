@@ -189,6 +189,7 @@ a {
   font-size: 1.2vh;
  }
 }
+
 .load-more-btn:hover {
   background-color: #fd5656;
 }

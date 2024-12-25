@@ -148,6 +148,7 @@ const load = async () => {
 
 onMounted(async () => {
   await load();
+  document.documentElement.style.setProperty('--el-text-color-secondary', 'black');
 });
 </script>
 
@@ -162,7 +163,7 @@ onMounted(async () => {
               <el-carousel-item v-for="item in detail.imgs" :key="item" class="carousel-item">
                 <img class="image"
                      :src="item"
-                     alt=""/>
+                     :alt="`${detail.imgs}_img`"/>
               </el-carousel-item>
             </el-carousel>
           </div>
@@ -194,7 +195,7 @@ onMounted(async () => {
               <hr/>
               <!-- Comments -->
               <div class="comments" v-if="comments" v-infinite-scroll="load" :infinite-scroll-disabled="disabled">
-                <el-empty description="There are no comments yet" v-if="comments.length === 0"/>
+                <el-empty class="custom-empty"  :description-style="{ color: 'black' }"  description="There are no comments yet" v-if="comments.length === 0"/>
                 <div v-else class="commentBox">
                   <div class="commentTitle" style="margin-bottom: 0.5vw;">Total {{ detail.commentCount }} comments</div>
                   <div v-for="item in comments" :key="item.id">
@@ -272,11 +273,11 @@ onMounted(async () => {
                 </el-button>
               </el-row>
             </div>
-            <label for="searchInput" class="sr-only">Say something...</label>
+            
             <el-input
                 v-model="content" class="comment-input my" type="text" placeholder="Say something..." ref="commentInput"
                 :prefix-icon="Edit" @keyup.enter="sendComment(detail, to)" clearable style="margin-top: 0.3vw"
-                :disabled="review"
+                :disabled="review" aria-label="Comment"
             />
           </div>
         </el-col>
@@ -287,6 +288,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+
 
 
 .sr-only {
@@ -399,6 +401,7 @@ onMounted(async () => {
   margin-right: 2vw;
 }
 
+
 .comment-input {
   margin-left: -2vw;
   position: relative;
@@ -406,4 +409,6 @@ onMounted(async () => {
   font-size: 1vw;
   width: 40vw;
 }
+
+
 </style>

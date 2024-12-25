@@ -10,12 +10,10 @@ import {controlDetail} from "@/stores/controlDetail";
 import {onClickOutside} from "@vueuse/core";
 import {useUserStore} from "@/stores/user";
 import {ElMessage} from "element-plus";
-import { LazyImg, Waterfall } from 'vue-waterfall-plugin-next'
 import 'vue-waterfall-plugin-next/dist/style.css'
 import '../../styles/common.css'
 
 const route = useRoute()
-const router = useRoute()
 const Details = controlDetail()
 const userStore = useUserStore()
 const baseURL = import.meta.env.VITE_API_BASE_URL
@@ -474,7 +472,7 @@ const doUpdate = async () => {
   <div class="userInfo" v-if="userInfo.user">
     <el-row :gutter="10">
       <el-col :span="7" style="width: 20vw;">
-        <el-avatar style="width: 10vw;height: 10vw;" :src="userInfo.user.avatar"></el-avatar>
+        <el-avatar alt="user avatar" style="width: 10vw;height: 10vw;" :src="userInfo.user.avatar"></el-avatar>
       </el-col>
       <el-col :span="7" style="width: 15vw;">
         <h2>{{ userInfo.user.username }}</h2>
@@ -539,7 +537,7 @@ const doUpdate = async () => {
         @after-leave="onAfterLeave"
     >
       <div class="overlay" v-if="show" @click.self="handleOverlayClose">
-        <button class="backPage" @click="handleOverlayClose">
+        <button class="backPage" aria-label="Back" @click="handleOverlayClose">
           <el-icon>
             <Back/>
           </el-icon>
@@ -576,7 +574,7 @@ const doUpdate = async () => {
         @after-leave="onAfterLeave"
     >
       <div class="overlay" v-if="show">
-        <button style="display:none;" class="backPage" @click="close">
+        <button style="display:none;" class="backPage" aria-label="Back" @click="close">
           <el-icon>
             <Back/>
           </el-icon>
@@ -613,7 +611,7 @@ const doUpdate = async () => {
         @after-leave="onAfterLeave"
     >
       <div class="overlay" v-if="show" @click.self="handleOverlayClose">
-        <button class="backPage" @click="handleOverlayClose">
+        <button class="backPage" aria-label="Back" @click="handleOverlayClose">
           <el-icon>
             <Back/>
           </el-icon>
@@ -629,12 +627,14 @@ const doUpdate = async () => {
     </transition>
     </div>
 
-        <el-dialog 
+      <el-dialog 
         v-model="dialogFormVisible" 
         title="" 
         @closed="closeDialog"
         center 
         draggable
+        aria-labelledby="uploadDialogLabel"
+        aria-describedby="uploadDialogDesc"
         class="update-info-dialog"
       >
         <div class="fileUpload">
@@ -652,6 +652,7 @@ const doUpdate = async () => {
           :on-error="onError"
           class="upload-container"
           :on-preview="handlePictureCardPreview"
+          aria-label="Upload your profile picture"
           >
           <template #trigger>
             <div v-if="!fileList.length" class="upload-area">
@@ -664,14 +665,16 @@ const doUpdate = async () => {
       </el-upload>
 
     </div>
+    <div id="uploadDialogLabel" class="sr-only">Upload and Update Information
+  <div id="uploadDialogDesc" class="sr-only">Select and upload your profile picture
     <div class="fileUpload">
       <el-form :model="form" ref="formRef" :rules="rules" label-position="top">
         <el-form-item prop="username" label="Name" label-width="7vw" style="margin: 2vw;font-size: 100%;">
           <el-input v-model="form.username" maxlength="32"
-                    show-word-limit class="my"/>
+                    show-word-limit class="my" aria-label="Enter your name"/>
         </el-form-item>
         <el-form-item prop="signature" label="Bio" label-width="7vw" style="margin: 2vw;">
-          <el-input v-model="form.signature" class="my"/>
+          <el-input v-model="form.signature" class="my" aria-label="Enter your bio"/>
         </el-form-item>
 
         <el-divider content-position="center">Change Password</el-divider>
@@ -688,7 +691,7 @@ const doUpdate = async () => {
         </el-form-item>
 
       </el-form>
-    </div>
+    </div></div></div>
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="closeDialog" round>Cancel</el-button>

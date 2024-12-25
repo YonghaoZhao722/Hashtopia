@@ -161,18 +161,15 @@ const handleDelete = async (index, row) => {
 const getTableColumns = computed(() => {
   if (isMobile.value) {
     return type.value === 1 ? [
-      { type: 'selection', width: '55' },
       { label: 'Title', prop: 'title' },
       { label: 'Operation', slot: 'operation', align: 'center' }
     ] : [
-      { type: 'selection', width: '55' },
       { label: 'Username', prop: 'username' },
       { label: 'Operation', slot: 'operation', align: 'center' }
     ]
   }
   
   return type.value === 1 ? [
-    { type: 'selection', width: '55' },
     { label: 'Date', prop: 'date', sortable: true },
     { label: 'Username', prop: 'username' },
     { label: 'Title', prop: 'title' },
@@ -182,7 +179,6 @@ const getTableColumns = computed(() => {
     { label: 'Collect Count', prop: 'collectCount', sortable: true },
     { label: 'Operation', slot: 'operation', align: 'center' }
   ] : [
-    { type: 'selection', width: '55' },
     { label: 'Avatar', slot: 'avatar', align: 'center' },
     { label: 'Username', prop: 'username', sortable: true, showOverflowTooltip: true },
     { label: 'Fans', prop: 'fans' },
@@ -294,7 +290,8 @@ onBeforeUnmount(() => {
             placeholder="Select"
             @change="changeShow"
             :style="{ width: isMobile ? '100%' : '200px' }"
-        >
+            aria-label="Select option for post or user management"
+          >
           <template #prefix>
             <el-tooltip
                 placement="top"
@@ -331,6 +328,7 @@ onBeforeUnmount(() => {
       <div class="table-container" v-if="type === 1">
         <el-table
             :data="tableData"
+            :row-key="'id'"
             style="width: 100%"
             ref="tableRef"
             :default-sort="{ prop: 'date', order: 'descending' }"
@@ -340,13 +338,24 @@ onBeforeUnmount(() => {
             stripe
             :size="isMobile ? 'small' : 'default'"
         >
+          <el-table-column 
+              type="selection" 
+              width="55"
+              :selectable="(row) => true"
+              :reserve-selection="true"
+              :label="'Select row'"
+              aria-label="Select row checkbox"
+              title="Select"
+          />Select
           <template v-for="col in getTableColumns" :key="col.prop || col.type">
             <el-table-column v-bind="col">
               <template #default="scope" v-if="col.slot === 'operation'">
                 <el-button
-                    :size="isMobile ? 'small' : 'default'"
-                    type="danger"
-                    @click="handleDelete(scope.$index, scope.row)">
+                  :size="isMobile ? 'small' : 'default'"
+                  type="danger"
+                  @click="handleDelete(scope.$index, scope.row)"
+                  aria-label="Delete post"
+                >
                   Delete
                 </el-button>
               </template>
@@ -360,13 +369,21 @@ onBeforeUnmount(() => {
               round 
               :size="isMobile ? 'small' : 'default'"
               @click="handleBulkDelete"
+              aria-label="Delete selected items"
           >
             Delete Selected
           </el-button>
-          <el-button @click="tableRef.clearSelection()" round :size="isMobile ? 'small' : 'default'">Clear All</el-button>
+          <el-button 
+              @click="tableRef.clearSelection()" 
+              round 
+              :size="isMobile ? 'small' : 'default'"
+              aria-label="Clear selection"
+          >
+            Clear All
+          </el-button>
         </div>
 
-        <div class="pagination">
+        <div class="pagination" role="navigation" aria-label="Pagination">
           <el-pagination
               v-model:current-page="currentPage"
               v-model:page-size="pageSize"
@@ -375,31 +392,43 @@ onBeforeUnmount(() => {
               :total="total_post"
               @current-change="handleCurrentChange"
               :small="isMobile"
+              aria-label="Pagination control"
           />
         </div>
       </div>
 
       <div class="table-container" v-else>
-        <el-table
-            :data="userData"
-            style="width: 100%"
-            ref="tableRef"
-            @selection-change="handleSelectionChange"
-            border
-            v-loading="loading"
-            stripe
-            :size="isMobile ? 'small' : 'default'"
-        >
+            <el-table
+                :data="userData"
+                :row-key="'id'"
+                style="width: 100%"
+                ref="tableRef"
+                @selection-change="handleSelectionChange"
+                border
+                v-loading="loading"
+                stripe
+                :size="isMobile ? 'small' : 'default'"
+            >
+              <el-table-column 
+                  type="selection" 
+                  width="55"
+                  :selectable="(row) => true"
+                  :reserve-selection="true"
+                  label="Select All"
+                  :aria-label="'Select all items'"
+              />
           <template v-for="col in getTableColumns" :key="col.prop || col.type">
             <el-table-column v-bind="col">
               <template #default="scope" v-if="col.slot === 'avatar'">
-                <el-avatar :size="isMobile ? 'small' : 'default'" :src="scope.row.avatar"></el-avatar>
+                <el-avatar :size="isMobile ? 'small' : 'default'" :src="scope.row.avatar" :alt="`${scope.row.name}'s avatar`"/>
               </template>
               <template #default="scope" v-if="col.slot === 'operation'">
                 <el-button
                     :size="isMobile ? 'small' : 'default'"
                     type="danger"
-                    @click="handleDelete(scope.$index, scope.row)">
+                    @click="handleDelete(scope.$index, scope.row)"
+                    aria-label="Remove user"
+                >
                   Remove
                 </el-button>
               </template>
@@ -413,13 +442,21 @@ onBeforeUnmount(() => {
               round 
               :size="isMobile ? 'small' : 'default'"
               @click="handleBulkDelete"
+              aria-label="Delete selected users"
           >
             Delete Selected
           </el-button>
-          <el-button @click="tableRef.clearSelection()" round :size="isMobile ? 'small' : 'default'">Clear All</el-button>
+          <el-button 
+              @click="tableRef.clearSelection()" 
+              round 
+              :size="isMobile ? 'small' : 'default'"
+              aria-label="Clear selection"
+          >
+            Clear All
+          </el-button>
         </div>
 
-        <div class="pagination">
+        <div class="pagination" role="navigation" aria-label="Pagination">
           <el-pagination
               v-model:current-page="currentPage"
               v-model:page-size="pageSize"
@@ -428,6 +465,7 @@ onBeforeUnmount(() => {
               :total="total_user"
               @current-change="handleCurrentChange"
               :small="isMobile"
+              aria-label="Pagination control"
           />
         </div>
       </div>
@@ -436,6 +474,18 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .container {
   width: 100%;
   padding: 1rem;

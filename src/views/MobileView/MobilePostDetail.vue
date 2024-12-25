@@ -145,7 +145,7 @@ onMounted(async () => {
       <div class="center-section">
         <div class="user-info">
           <router-link :to="`/user/index/${detail.user.id}`" class="user-link">
-            <el-avatar :src="detail.user.avatar" :size="36" />
+            <el-avatar :src="detail.user.avatar" :size="36" :alt="`${detail.user.id}_avatar`" />
             <span class="username">{{ detail.user.username }}</span>
           </router-link>
           <el-button 
@@ -166,7 +166,7 @@ onMounted(async () => {
       <!-- Image Carousel -->
       <el-carousel height="40vh">
         <el-carousel-item v-for="item in detail.imgs" :key="item">
-          <img :src="item" class="carousel-image" />
+          <img :src="item" class="carousel-image" :alt="`${detail.imgs}_img`" />
         </el-carousel-item>
       </el-carousel>
 
@@ -209,7 +209,7 @@ onMounted(async () => {
       <div class="comments-section" v-infinite-scroll="load" :infinite-scroll-disabled="disabled">
         <div class="comment-count">Comment {{ detail.commentCount }}</div>
         <div v-for="comment in comments" :key="comment.id" class="comment-item">
-          <el-avatar :src="comment.user.avatar" :size="30" />
+          <el-avatar :src="comment.user.avatar" :size="30" :alt="`${detail.user.id}_avatar`" />
           <div class="comment-content">
             <div class="comment-user">{{ comment.user.username }}</div>
             <div class="comment-text">{{ comment.content }}</div>
@@ -231,6 +231,7 @@ onMounted(async () => {
         :prefix-icon="Edit"
         @keyup.enter="sendComment(detail, to)"
         clearable
+        aria-label="Comment"
       />
     </div>
   </div>

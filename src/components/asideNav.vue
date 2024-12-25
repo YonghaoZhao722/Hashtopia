@@ -180,7 +180,7 @@ const changeShow = () => {
   position: absolute;
   width: 60px;
   height: 96vh;
-  background-color: #eddddd;
+  background-color: #ffffff;
   z-index: 2;
   top: 1vh;
   bottom: 0;
@@ -189,6 +189,8 @@ const changeShow = () => {
   border-radius: 0.8rem;
   transition: 0.3s ease 0.15s;
   font-family: sans-serif;
+  border: 2px solid #b35f5d; /* 添加边框 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); /* 添加阴影效果使边框更突出 */
 }
 
 .menu a {

@@ -186,8 +186,8 @@ const handleChange = (file, fileList) => {
            @dragover.prevent="isDragging = true"
            @dragleave.prevent="isDragging = false"
            @drop="handleDrop">
-        
-          <el-upload
+           <label id="upload-label" class="sr-only">Upload Images</label>
+           <el-upload
               v-model:file-list="fileList"
               action=baseURL
               ref="upload"
@@ -199,7 +199,8 @@ const handleChange = (file, fileList) => {
               :on-preview="handlePictureCardPreview"
               :auto-upload="false"
               :data="{id: postId}"
-          >
+              aria-labelledby="upload-label"
+            >
           <template #default>
             <el-icon><Plus /></el-icon>
           </template>
@@ -239,7 +240,10 @@ const handleChange = (file, fileList) => {
   </div>
 
   <!-- Image Preview Modal -->
-  <el-dialog v-model="dialogVisible">
+  <el-dialog 
+    v-model="dialogVisible"
+    :title="'Image Preview'"
+    aria-label="Image Preview Dialog">
     <img :src="dialogImageUrl" alt="Preview Image" style="width: 100%;"/>
   </el-dialog>
   </el-main>
@@ -247,6 +251,18 @@ const handleChange = (file, fileList) => {
 </template>
 
 <style scoped>
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .page-container {
   height: 90vh;
 }

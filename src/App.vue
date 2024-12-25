@@ -12,5 +12,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-
+:root{
+  --el-text-color-secondary:black !important;
+}
 </style>

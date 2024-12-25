@@ -25,8 +25,8 @@ const searchThings = () => {
     </el-col>
     <el-col :span="16" style="margin-top: 1.5vh;">
       <div>
-        <label for="searchInput" class="sr-only">Search</label>
         <el-input 
+          aria-label="Comment"
           id="searchInput"
           class="my" 
           v-model="searchInput" 
@@ -34,7 +34,6 @@ const searchThings = () => {
           @keyup.enter="searchThings"
           :prefix-icon="Search"
           clearable
-          aria-label="Search for something"
         />
       </div>
 

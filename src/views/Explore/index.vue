@@ -259,7 +259,7 @@ onMounted(async () => {
       @after-leave="onAfterLeave"
   >
     <div class="overlay" v-if="show" @click.self="handleOverlayClose">
-      <button class="backPage" @click="handleOverlayClose">
+      <button class="backPage" aria-label="Back" @click="handleOverlayClose">
         <el-icon>
           <Back/>
         </el-icon>
