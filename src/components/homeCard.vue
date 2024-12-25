@@ -55,11 +55,16 @@ const handleLoadMore = () => {
             </div>
             <div class="bottom">
               <el-row class="user-info">
-                <RouterLink :to="`/user/index/${item.user.id}`">
-                  <el-avatar :src="item.user.avatar" size="small" :alt="`user_${item.user.id}_avatar`" />
+                <RouterLink :to="`/user/index/${item.user.id}`" aria-label="User profile">
+                  <el-avatar 
+                    :src="item.user.avatar || 'default-avatar.png'" 
+                    size="small" 
+                    :alt="item.user.username ? `Avatar of ${item.user.username}` : 'Default avatar'" 
+                  />
+                  <span v-if="!item.user.username">Anonymous User</span>
                 </RouterLink>
                 <RouterLink :to="`/user/index/${item.user.id}`">
-                 <div class="username">{{ item.user.username }}</div>
+                  <div class="username">{{ item.user.username || 'Anonymous User' }}</div>
                 </RouterLink>
               </el-row>
             </div>

@@ -287,6 +287,8 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+
+
 .sr-only {
   position: absolute;
   clip: rect(0, 0, 0, 0);
@@ -325,7 +327,7 @@ onMounted(async () => {
   border-radius: 0.8rem;
   width: 90vw;
   height: 45vw;
-  box-shadow: -26px 28px 28px -20px rgba(0, 0, 0, 0.3), 30px 10px 61px -20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 28px rgba(0, 0, 0, 0.3);
 }
 
 .banner {

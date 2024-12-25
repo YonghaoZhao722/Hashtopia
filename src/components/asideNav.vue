@@ -37,7 +37,9 @@ const changeShow = () => {
             aria-label="Toggle menu">
             <i class="iconfont icon-hanbaocaidan"></i>
           </button>
-          <h3 class="menuText" :class="{ open2: isMenuOpen }">{{ userStore.userInfo.username }}</h3>
+          <h3 class="menuText" :class="{ open2: isMenuOpen }">
+              {{ userStore.userInfo.username || 'Hashtopia' }}
+          </h3>
         </div>
       </div>
     <ul class="optionsBar">
@@ -178,7 +180,7 @@ const changeShow = () => {
   position: absolute;
   width: 60px;
   height: 96vh;
-  background-color: #f6f3f3;
+  background-color: #eddddd;
   z-index: 2;
   top: 1vh;
   bottom: 0;
